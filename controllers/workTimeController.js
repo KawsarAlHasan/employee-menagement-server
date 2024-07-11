@@ -4,7 +4,23 @@ const moment = require("moment");
 // get all work time
 exports.getAllWorkTime = async (req, res) => {
   try {
-    const data = await db.query("SELECT * FROM work_hours");
+    const { employeeID, paymentDate } = req.query;
+
+    let params = [];
+    let query = "SELECT * FROM work_hours WHERE 1=1";
+
+    if (employeeID) {
+      query += " AND employeeID = ?";
+      params.push(employeeID);
+    }
+
+    if (paymentDate) {
+      query += " AND date = ?";
+      params.push(paymentDate);
+    }
+
+    const data = await db.query(query, params);
+
     if (!data) {
       return res.status(404).send({
         success: false,

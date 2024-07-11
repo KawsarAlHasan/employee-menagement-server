@@ -22,6 +22,8 @@ app.use("/api/v1/employee", require("./routes/employeeRoute"));
 app.use("/api/v1/admin", require("./routes/adminRoute"));
 app.use("/api/v1/salary", require("./routes/salariesRoute"));
 app.use("/api/v1/work-time", require("./routes/workTimeRoute"));
+app.use("/api/v1/sales", require("./routes/salesRoute"));
+app.use("/api/v1/partnership", require("./routes/partnershipRoute"));
 
 const port = process.env.PORT || 5000;
 
