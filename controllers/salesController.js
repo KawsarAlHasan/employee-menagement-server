@@ -66,12 +66,12 @@ exports.createsales = async (req, res) => {
       foodPanda,
       date,
     } = req.body;
-    if (!salesRegister || !totalCashCollect || !craditeSales || !so_ov) {
-      return res.status(500).send({
-        success: false,
-        message: "Please provide all fields",
-      });
-    }
+    // if (!salesRegister || !totalCashCollect || !craditeSales || !so_ov) {
+    //   return res.status(500).send({
+    //     success: false,
+    //     message: "Please provide all fields",
+    //   });
+    // }
 
     const data = await db.query(
       `INSERT INTO sales (salesRegister, totalCashCollect, craditeSales, so_ov, doordash, uber, foodPanda, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,

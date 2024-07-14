@@ -74,8 +74,8 @@ exports.getSingleSalaryByID = async (req, res) => {
 // create salaries
 exports.createSalary = async (req, res) => {
   try {
-    const { employeeID, amout, payBy, date } = req.body;
-    if (!employeeID || !amout || !payBy || !date) {
+    const { employeeID, amount, payBy, date } = req.body;
+    if (!employeeID || !amount || !payBy || !date) {
       return res.status(500).send({
         success: false,
         message: "Please provide all fields",
@@ -83,8 +83,8 @@ exports.createSalary = async (req, res) => {
     }
 
     const data = await db.query(
-      `INSERT INTO salaries (employeeID, amout, payBy, date) VALUES (?, ?, ?, ?)`,
-      [employeeID, amout, payBy, date]
+      `INSERT INTO salaries (employeeID, amount, payBy, date) VALUES (?, ?, ?, ?)`,
+      [employeeID, amount, payBy, date]
     );
 
     if (!data) {
@@ -118,18 +118,18 @@ exports.updateSalary = async (req, res) => {
         message: "Invalid or missing Employee ID",
       });
     }
-    const { amout, payBy, date } = req.body;
+    const { amount, payBy, date } = req.body;
 
-    if (!amout || !payBy || !date) {
+    if (!amount || !payBy || !date) {
       return res.status(404).send({
         success: false,
-        message: "Please Provide amout, payBy and date",
+        message: "Please Provide amount, payBy and date",
       });
     }
 
     const data = await db.query(
-      `UPDATE salaries SET amout=?, payBy=?, date=? WHERE id =? `,
-      [amout, payBy, date, salaryID]
+      `UPDATE salaries SET amount=?, payBy=?, date=? WHERE id =? `,
+      [amount, payBy, date, salaryID]
     );
     if (!data) {
       return res.status(500).send({
@@ -187,7 +187,7 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
     }
 
     const [data] = await db.query(
-      "SELECT amout FROM salaries WHERE employeeID = ?",
+      "SELECT amount FROM salaries WHERE employeeID = ?",
       [employeeId]
     );
 
@@ -198,12 +198,12 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
       });
     }
 
-    const [amoutData] = await db.query(
+    const [amountData] = await db.query(
       "SELECT total_hours, amount FROM work_hours WHERE employeeID = ?",
       [employeeId]
     );
 
-    if (!amoutData) {
+    if (!amountData) {
       return res.status(404).send({
         success: false,
         message: "No Earnings found",
@@ -212,7 +212,7 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
 
     let totalAmount = 0;
     let allHours = moment.duration(0);
-    amoutData.forEach((row) => {
+    amountData.forEach((row) => {
       totalAmount += row.amount;
       let hours = row.total_hours;
       if (hours) {
@@ -233,7 +233,7 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
       ":" +
       moment.utc(allHours.asMilliseconds()).format("mm");
 
-    const totalPayment = data.reduce((acc, item) => acc + item.amout, 0);
+    const totalPayment = data.reduce((acc, item) => acc + item.amount, 0);
     const dueAmount = totalAmount - totalPayment;
 
     res.status(200).send({
