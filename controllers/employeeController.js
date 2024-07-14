@@ -85,23 +85,23 @@ exports.createEmployee = async (req, res) => {
     //   });
     // }
 
-    // const data = await db.query(
-    //   `INSERT INTO employees (name, email, password, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    //   [name, email, password, phone, type, salaryType, salaryRate]
-    // );
+    const data = await db.query(
+      `INSERT INTO employees (name, email, password, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [name, email, password, phone, type, salaryType, salaryRate]
+    );
 
-    // if (!data) {
-    //   return res.status(404).send({
-    //     success: false,
-    //     message: "Error in INSERT QUERY",
-    //   });
-    // }
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        message: "Error in INSERT QUERY",
+      });
+    }
 
-    // res.status(200).send({
-    //   success: true,
-    //   message: "Employee created successfully",
-    //   data,
-    // });
+    res.status(200).send({
+      success: true,
+      message: "Employee created successfully",
+      data,
+    });
   } catch (error) {
     res.status(500).send({
       success: false,
