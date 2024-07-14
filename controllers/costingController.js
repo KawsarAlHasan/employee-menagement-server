@@ -3,17 +3,42 @@ const db = require("../confiq/db");
 // get all Costings
 exports.getAllCostings = async (req, res) => {
   try {
-    const data = await db.query("SELECT * FROM costings");
+    const { month, year, day } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).send({
+        success: false,
+        message: "Month and year are required",
+      });
+    }
+
+    const startDate = new Date(year, month - 1, 1);
+
+    const endDate = day
+      ? new Date(year, month - 1, day, 23, 59, 59)
+      : new Date(year, month, 0, 23, 59, 59);
+
+    const data = await db.query(
+      "SELECT * FROM costings WHERE date >= ? AND date <= ?",
+      [startDate, endDate]
+    );
     if (!data) {
       return res.status(404).send({
         success: false,
         message: "No Costings found",
       });
     }
+
+    let totalCostingsAmount = 0;
+    data[0].forEach((entry) => {
+      totalCostingsAmount += entry.amount;
+    });
+
     res.status(200).send({
       success: true,
       message: "Get All Costings",
       totalCostings: data[0].length,
+      totalCostingsAmount,
       data: data[0],
     });
   } catch (error) {

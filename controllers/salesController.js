@@ -3,17 +3,48 @@ const db = require("../confiq/db");
 // get all sales
 exports.getAllSales = async (req, res) => {
   try {
-    const data = await db.query("SELECT * FROM sales");
+    const { month, year, day } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).send({
+        success: false,
+        message: "Month and year are required",
+      });
+    }
+
+    const startDate = new Date(year, month - 1, 1);
+
+    const endDate = day
+      ? new Date(year, month - 1, day, 23, 59, 59)
+      : new Date(year, month, 0, 23, 59, 59);
+
+    const data = await db.query(
+      "SELECT * FROM sales WHERE date >= ? AND date <= ?",
+      [startDate, endDate]
+    );
     if (!data) {
       return res.status(404).send({
         success: false,
         message: "No sales found",
       });
     }
+
+    let totalSalesAmount = 0;
+    data[0].forEach((entry) => {
+      const totalSales =
+        entry.totalCashCollect +
+        entry.craditeSales +
+        entry.doordash +
+        entry.uber +
+        entry.foodPanda;
+      totalSalesAmount += totalSales;
+    });
+
     res.status(200).send({
       success: true,
       message: "All sales",
       totalSales: data[0].length,
+      totalSalesAmount,
       data: data[0],
     });
   } catch (error) {

@@ -62,20 +62,21 @@ exports.createEmployee = async (req, res) => {
   try {
     const { name, email, password, phone, type, salaryType, salaryRate } =
       req.body;
-    if (
-      !name ||
-      !email ||
-      !password ||
-      !phone ||
-      !type ||
-      !salaryType ||
-      !salaryRate
-    ) {
-      return res.status(500).send({
-        success: false,
-        message: "Please provide all fields",
-      });
-    }
+
+    // if (
+    //   !name ||
+    //   !email ||
+    //   !password ||
+    //   !phone ||
+    //   !type ||
+    //   !salaryType ||
+    //   !salaryRate
+    // ) {
+    //   return res.status(500).send({
+    //     success: false,
+    //     message: "Please provide all fields",
+    //   });
+    // }
 
     const data = await db.query(
       `INSERT INTO employees (name, email, password, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?)`,

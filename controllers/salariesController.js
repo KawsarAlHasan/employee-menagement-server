@@ -2,35 +2,35 @@ const db = require("../confiq/db");
 const moment = require("moment");
 
 exports.getAllSalaries = async (req, res) => {
-  try {
-    const { employeeID, paymentDate } = req.query;
+  const { month, year, day, employeeID } = req.query;
 
-    let params = [];
-    let query = "SELECT * FROM salaries WHERE 1=1";
+  if (!month || !year) {
+    return res.status(400).send({
+      success: false,
+      message: "Month and year are required",
+    });
+  }
+
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = day
+    ? new Date(year, month - 1, day, 23, 59, 59)
+    : new Date(year, month, 0, 23, 59, 59);
+  try {
+    let query = "SELECT * FROM salaries WHERE date >= ? AND date <= ?";
+    const params = [startDate, endDate];
 
     if (employeeID) {
       query += " AND employeeID = ?";
       params.push(employeeID);
     }
 
-    if (paymentDate) {
-      query += " AND date = ?";
-      params.push(paymentDate);
-    }
+    const rows = await db.query(query, params);
 
-    const data = await db.query(query, params);
-
-    if (!data) {
-      return res.status(404).send({
-        success: false,
-        message: "No Salaries found",
-      });
-    }
     res.status(200).send({
       success: true,
       message: "All Salaries",
-      totalSalaries: data[0].length,
-      data: data[0],
+      totalSalaries: rows[0].length,
+      data: rows[0],
     });
   } catch (error) {
     res.status(500).send({
