@@ -63,17 +63,12 @@ exports.createEmployee = async (req, res) => {
     const { name, email, password, phone, type, salaryType, salaryRate } =
       req.body;
 
-    console.log("Req Body:", req.body);
-    console.log(
-      "name, email, password, phone, type, salaryType, salaryRate",
-      name,
-      email,
-      password,
-      phone,
-      type,
-      salaryType,
-      salaryRate
-    );
+    const abc = { name, email, password, phone, type, salaryType, salaryRate };
+
+    res.send({
+      reqBody: req.body,
+      abc,
+    });
 
     // if (
     //   !name ||
