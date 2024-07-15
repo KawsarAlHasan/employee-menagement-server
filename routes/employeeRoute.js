@@ -15,7 +15,7 @@ const router = express.Router();
 router.get("/all", getAllEmployees);
 router.get("/me", varifyEmployee, getMeEmployee);
 router.get("/:id", getSingleEmployee);
-router.post("/create", createEmployee);
+router.patch("/create", createEmployee);
 router.post("/login", employeeLogin);
 router.put("/update/:id", updateEmployee);
 router.delete("/delete/:id", deleteEmployee);
