@@ -167,7 +167,7 @@ exports.employeeLogin = async (req, res) => {
       success: true,
       message: "Successfully logged in",
       data: {
-        empLoyeeWithoutPassword,
+        user: empLoyeeWithoutPassword,
         token,
       },
     });
