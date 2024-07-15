@@ -74,8 +74,8 @@ exports.getSingleSalaryByID = async (req, res) => {
 // create salaries
 exports.createSalary = async (req, res) => {
   try {
-    const { employeeID, amount, payBy, date } = req.body;
-    if (!employeeID || !amount || !payBy || !date) {
+    const { employeeID, name, amount, payBy, date } = req.body;
+    if (!employeeID || !name || !amount || !payBy || !date) {
       return res.status(500).send({
         success: false,
         message: "Please provide all fields",
@@ -83,8 +83,8 @@ exports.createSalary = async (req, res) => {
     }
 
     const data = await db.query(
-      `INSERT INTO salaries (employeeID, amount, payBy, date) VALUES (?, ?, ?, ?)`,
-      [employeeID, amount, payBy, date]
+      `INSERT INTO salaries (employeeID, employeeName, amount, payBy, date) VALUES (?, ?, ?, ?, ?)`,
+      [employeeID, name, amount, payBy, date]
     );
 
     if (!data) {

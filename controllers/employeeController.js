@@ -181,7 +181,7 @@ exports.updateEmployee = async (req, res) => {
     if (!employeeID) {
       return res.status(404).send({
         success: false,
-        message: "Invalid or missing Employee ID",
+        message: "Employee ID is requied",
       });
     }
     const { name, email, phone, type, salaryType, salaryRate } = req.body;
