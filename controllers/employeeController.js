@@ -5,24 +5,31 @@ const bcrypt = require("bcrypt");
 // get all Employees
 exports.getAllEmployees = async (req, res) => {
   try {
-    const data = await db.query("SELECT * FROM employees");
-    if (!data) {
+    const [data] = await db.query("SELECT * FROM employees");
+
+    if (!data || data.length === 0) {
       return res.status(404).send({
         success: false,
         message: "No Employees found",
       });
     }
+
+    // Filter out admin employees
+    const filteredEmployees = data.filter(
+      (employee) => employee.type.toLowerCase() !== "admin"
+    );
+
     res.status(200).send({
       success: true,
       message: "All Employees",
-      totalempLoyees: data[0].length,
-      data: data[0],
+      totalempLoyees: filteredEmployees.length,
+      data: filteredEmployees,
     });
   } catch (error) {
     res.status(500).send({
       success: false,
       message: "Error in Get All empLoyees",
-      error,
+      error: error.message,
     });
   }
 };
@@ -147,22 +154,6 @@ exports.employeeLogin = async (req, res) => {
     const token = generateEmployeeToken(empLoyee);
     const { password: pwd, ...empLoyeeWithoutPassword } = empLoyee;
 
-    //check type / role
-    //if(tyep == "admin" && type == "Manager"){
-    // res.status(200).json({
-    //   success: true,
-    //   message: "Successfully logged in",
-    //   data: {
-    //     empLoyee: empLoyeeWithoutPassword,
-    //     token,
-    //   },
-    // });
-    //}elses{
-    //  return res.status(403).json({
-    //   success: false,
-    //   error: "Email and Password is not correct",
-    // });
-    //}
     res.status(200).json({
       success: true,
       message: "Successfully logged in",

@@ -67,21 +67,20 @@ exports.addPartner = async (req, res) => {
     );
     const totalPercentage = rows[0].totalPercentage || 0;
 
-    // get me admin
-    const decodedadmin = req?.decodedadmin?.email;
-    const [adminResult] = await db.query(
-      `SELECT name, email FROM employeesAdmin WHERE email=?`,
-      [decodedadmin]
+    const [data] = await db.query("SELECT * FROM employees");
+    const [filteredAdmin] = data.filter(
+      (employee) => employee.type.toLowerCase() == "admin"
     );
 
-    const adminName = adminResult[0].name;
-    const adminEmail = adminResult[0].email;
+    const adminName = filteredAdmin.name;
+    const adminEmail = filteredAdmin.email;
+    const adminPhone = filteredAdmin.phone;
 
     // admin add
     if (totalPercentage === 0) {
       await db.query(
         "INSERT INTO partnership (name, email, phone, percentage) VALUES (?, ?, ?, ?)",
-        [adminName, adminEmail, "01", 100]
+        [adminName, adminEmail, adminPhone, 100]
       );
     }
 
@@ -134,22 +133,14 @@ exports.updatePartner = async (req, res) => {
     }
 
     // Get admin data
-    const decodedadmin = req?.decodedadmin?.email;
-    const [adminResult] = await db.query(
-      `SELECT email FROM employeesAdmin WHERE email = ?`,
-      [decodedadmin]
+    const [data] = await db.query("SELECT * FROM employees");
+    const [filteredAdmin] = data.filter(
+      (employee) => employee.type.toLowerCase() == "admin"
     );
-
-    if (adminResult.length === 0) {
-      return res.status(404).send({
-        success: false,
-        message: "Admin not found",
-      });
-    }
 
     const prePartnerPercentage = getPartnerdata[0].percentage;
     const difference = percentage - prePartnerPercentage;
-    const adminEmail = adminResult[0].email;
+    const adminEmail = filteredAdmin.email;
 
     // Update partner data
     const [updateResult] = await db.query(
