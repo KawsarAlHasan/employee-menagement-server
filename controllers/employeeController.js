@@ -78,22 +78,28 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-    const data = await db.query(
-      `INSERT INTO employees (name, email, password, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name, email, password, phone, type, salaryType, salaryRate]
-    );
+    const min = 1000;
+    const max = 9999;
+    const randomCode = Math.floor(Math.random() * (max - min + 1)) + min;
 
-    if (!data) {
-      return res.status(404).send({
-        success: false,
-        message: "Error in INSERT QUERY",
-      });
-    }
+    console.log(randomCode);
+
+    // const data = await db.query(
+    //   `INSERT INTO employees (name, email, password, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    //   [name, email, password, phone, type, salaryType, salaryRate]
+    // );
+
+    // if (!data) {
+    //   return res.status(404).send({
+    //     success: false,
+    //     message: "Error in INSERT QUERY",
+    //   });
+    // }
 
     res.status(200).send({
       success: true,
       message: "Employee created successfully",
-      data,
+      // data,
     });
   } catch (error) {
     res.status(500).send({
@@ -137,13 +143,31 @@ exports.employeeLogin = async (req, res) => {
         error: "Email and Password is not correct",
       });
     }
+
     const token = generateEmployeeToken(empLoyee);
     const { password: pwd, ...empLoyeeWithoutPassword } = empLoyee;
+
+    //check type / role
+    //if(tyep == "admin" && type == "Manager"){
+    // res.status(200).json({
+    //   success: true,
+    //   message: "Successfully logged in",
+    //   data: {
+    //     empLoyee: empLoyeeWithoutPassword,
+    //     token,
+    //   },
+    // });
+    //}elses{
+    //  return res.status(403).json({
+    //   success: false,
+    //   error: "Email and Password is not correct",
+    // });
+    //}
     res.status(200).json({
       success: true,
       message: "Successfully logged in",
       data: {
-        empLoyee: empLoyeeWithoutPassword,
+        empLoyeeWithoutPassword,
         token,
       },
     });
