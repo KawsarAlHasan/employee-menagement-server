@@ -60,14 +60,13 @@ exports.getSingleEmployee = async (req, res) => {
 // create employee
 exports.createEmployee = async (req, res) => {
   try {
-    const { name, email, password, phone, type, salaryType, salaryRate } =
-      req.body;
+    const data = req.body;
+    console.log(data["name"]);
 
-    const abc = { name, email, password, phone, type, salaryType, salaryRate };
+    // const abc = { name, email, password, phone, type, salaryType, salaryRate };
 
     res.send({
-      reqBody: req.body,
-      abc,
+      reqBody: data,
     });
 
     // if (
