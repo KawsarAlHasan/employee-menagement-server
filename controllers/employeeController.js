@@ -60,47 +60,41 @@ exports.getSingleEmployee = async (req, res) => {
 // create employee
 exports.createEmployee = async (req, res) => {
   try {
-    const data = req.body;
-    console.log(data["name"]);
+    const { name, email, password, phone, type, salaryType, salaryRate } =
+      req.body;
 
-    // const abc = { name, email, password, phone, type, salaryType, salaryRate };
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !phone ||
+      !type ||
+      !salaryType ||
+      !salaryRate
+    ) {
+      return res.status(500).send({
+        success: false,
+        message: "Please provide all fields",
+      });
+    }
 
-    res.send({
-      reqBody: data,
+    const data = await db.query(
+      `INSERT INTO employees (name, email, password, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [name, email, password, phone, type, salaryType, salaryRate]
+    );
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        message: "Error in INSERT QUERY",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Employee created successfully",
+      data,
     });
-
-    // if (
-    //   !name ||
-    //   !email ||
-    //   !password ||
-    //   !phone ||
-    //   !type ||
-    //   !salaryType ||
-    //   !salaryRate
-    // ) {
-    //   return res.status(500).send({
-    //     success: false,
-    //     message: "Please provide all fields",
-    //   });
-    // }
-
-    // const data = await db.query(
-    //   `INSERT INTO employees (name, email, password, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    //   [name, email, password, phone, type, salaryType, salaryRate]
-    // );
-
-    // if (!data) {
-    //   return res.status(404).send({
-    //     success: false,
-    //     message: "Error in INSERT QUERY",
-    //   });
-    // }
-
-    // res.status(200).send({
-    //   success: true,
-    //   message: "Employee created successfully",
-    //   data,
-    // });
   } catch (error) {
     res.status(500).send({
       success: false,

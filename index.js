@@ -18,7 +18,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.json());
 
-// app.use("/api/v1/employee", require("./routes/employeeRoute"));
+app.use("/api/v1/employee", require("./routes/employeeRoute"));
 app.use("/api/v1/admin", require("./routes/adminRoute"));
 app.use("/api/v1/salary", require("./routes/salariesRoute"));
 app.use("/api/v1/work-time", require("./routes/workTimeRoute"));
@@ -26,10 +26,6 @@ app.use("/api/v1/sales", require("./routes/salesRoute"));
 app.use("/api/v1/partnership", require("./routes/partnershipRoute"));
 app.use("/api/v1/costing", require("./routes/costingRoute"));
 app.use("/api/v1/profit", require("./routes/lossAndProfitRoute"));
-
-app.post("/api/v1/employee/create", async (req, res) => {
-  res.send(req.body);
-});
 
 const port = process.env.PORT || 5000;
 

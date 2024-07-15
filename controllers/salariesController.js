@@ -75,34 +75,30 @@ exports.getSingleSalaryByID = async (req, res) => {
 exports.createSalary = async (req, res) => {
   try {
     const { employeeID, amount, payBy, date } = req.body;
-    // if (!employeeID || !amount || !payBy || !date) {
-    //   return res.status(500).send({
-    //     success: false,
-    //     message: "Please provide all fields",
-    //   });
-    // }
+    if (!employeeID || !amount || !payBy || !date) {
+      return res.status(500).send({
+        success: false,
+        message: "Please provide all fields",
+      });
+    }
 
-    res.send({
-      reqBody: req.body,
+    const data = await db.query(
+      `INSERT INTO salaries (employeeID, amount, payBy, date) VALUES (?, ?, ?, ?)`,
+      [employeeID, amount, payBy, date]
+    );
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        message: "Error in INSERT QUERY",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Salary created successfully",
+      data,
     });
-
-    // const data = await db.query(
-    //   `INSERT INTO salaries (employeeID, amount, payBy, date) VALUES (?, ?, ?, ?)`,
-    //   [employeeID, amount, payBy, date]
-    // );
-
-    // if (!data) {
-    //   return res.status(404).send({
-    //     success: false,
-    //     message: "Error in INSERT QUERY",
-    //   });
-    // }
-
-    // res.status(200).send({
-    //   success: true,
-    //   message: "Salary created successfully",
-    //   data,
-    // });
   } catch (error) {
     res.status(500).send({
       success: false,
