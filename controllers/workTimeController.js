@@ -172,7 +172,7 @@ exports.endWorkTime = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in End Work",
-      error,
+      error: error.message,
     });
   }
 };

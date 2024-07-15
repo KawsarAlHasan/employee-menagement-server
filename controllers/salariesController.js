@@ -26,10 +26,16 @@ exports.getAllSalaries = async (req, res) => {
 
     const rows = await db.query(query, params);
 
+    let totalSalariesAmount = 0;
+    rows[0].forEach((entry) => {
+      totalSalariesAmount += entry.amount;
+    });
+
     res.status(200).send({
       success: true,
       message: "All Salaries",
       totalSalaries: rows[0].length,
+      totalSalariesAmount,
       data: rows[0],
     });
   } catch (error) {
