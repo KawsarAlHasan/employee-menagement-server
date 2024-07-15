@@ -16,7 +16,7 @@ exports.getAllSalaries = async (req, res) => {
     ? new Date(year, month - 1, day, 23, 59, 59)
     : new Date(year, month, 0, 23, 59, 59);
   try {
-    let query = "SELECT * FROM salaries WHERE date >= ? AND date <= ?";
+    let query = `SELECT salaries.*, employees.name AS employeeName FROM salaries JOIN employees ON salaries.employeeID = employees.id WHERE date >= ? AND date <= ?`;
     const params = [startDate, endDate];
 
     if (employeeID) {
@@ -80,8 +80,8 @@ exports.getSingleSalaryByID = async (req, res) => {
 // create salaries
 exports.createSalary = async (req, res) => {
   try {
-    const { employeeID, employeeName, amount, payBy, date } = req.body;
-    if (!employeeID || !employeeName || !amount || !payBy || !date) {
+    const { employeeID, amount, payBy, date } = req.body;
+    if (!employeeID || !amount || !payBy || !date) {
       return res.status(500).send({
         success: false,
         message: "Please provide all fields",
@@ -89,8 +89,8 @@ exports.createSalary = async (req, res) => {
     }
 
     const data = await db.query(
-      `INSERT INTO salaries (employeeID, employeeName, amount, payBy, date) VALUES (?, ?, ?, ?, ?)`,
-      [employeeID, employeeName, amount, payBy, date]
+      `INSERT INTO salaries (employeeID, amount, payBy, date) VALUES (?, ?, ?, ?)`,
+      [employeeID, amount, payBy, date]
     );
 
     if (!data) {
@@ -103,13 +103,12 @@ exports.createSalary = async (req, res) => {
     res.status(200).send({
       success: true,
       message: "Salary created successfully",
-      data,
     });
   } catch (error) {
     res.status(500).send({
       success: false,
       message: "Error in Create Salary API",
-      error,
+      error: error.message,
     });
   }
 };
