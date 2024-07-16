@@ -184,7 +184,39 @@ exports.updatePartner = async (req, res) => {
 // delete partner
 exports.deletePartner = async (req, res) => {
   try {
-    res.send("Partner Delete Upcomming");
+    const partnerId = req.params.id;
+    if (!partnerId) {
+      return res.status(404).send({
+        success: false,
+        message: "partnerId is required",
+      });
+    }
+
+    const [partnerPercentage] = await db.query(
+      `SELECT percentage FROM partnership WHERE id=?`,
+      [partnerId]
+    );
+
+    const partnerPer = partnerPercentage[0].percentage;
+
+    const [data] = await db.query("SELECT * FROM employees");
+    const [filteredAdmin] = data.filter(
+      (employee) => employee.type.toLowerCase() == "admin"
+    );
+
+    const adminEmail = filteredAdmin.email;
+
+    await db.query(
+      "UPDATE partnership SET percentage = percentage + ? WHERE email = ?",
+      [partnerPer, adminEmail]
+    );
+
+    await db.query(`DELETE FROM partnership WHERE id=?`, [partnerId]);
+
+    res.status(200).send({
+      success: true,
+      message: "Partner Deleted Successfully",
+    });
   } catch (error) {
     res.status(500).send({
       success: false,

@@ -1,6 +1,7 @@
 const db = require("../confiq/db");
 const { generateEmployeeToken } = require("../confiq/employeeToken");
 const bcrypt = require("bcrypt");
+const { sendMail } = require("../middleware/sandEmail");
 
 // get all Employees
 exports.getAllEmployees = async (req, res) => {
@@ -89,30 +90,44 @@ exports.createEmployee = async (req, res) => {
     const max = 9999;
     const randomCode = Math.floor(Math.random() * (max - min + 1)) + min;
 
-    console.log(randomCode);
+    const emailData = {
+      email,
+      name,
+      password,
+      phone,
+      type,
+      salaryType,
+      salaryRate,
+      randomCode,
+    };
 
-    // const data = await db.query(
-    //   `INSERT INTO employees (name, email, password, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    //   [name, email, password, phone, type, salaryType, salaryRate]
-    // );
+    const emailResult = await sendMail(emailData);
 
-    // if (!data) {
-    //   return res.status(404).send({
-    //     success: false,
-    //     message: "Error in INSERT QUERY",
-    //   });
-    // }
+    if (!emailResult.messageId) {
+      res.status(500).send("Failed to send email");
+    }
+
+    const data = await db.query(
+      `INSERT INTO employees (name, email, password, emailPin, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, email, password, randomCode, phone, type, salaryType, salaryRate]
+    );
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        message: "Error in INSERT QUERY",
+      });
+    }
 
     res.status(200).send({
       success: true,
       message: "Employee created successfully",
-      // data,
     });
   } catch (error) {
     res.status(500).send({
       success: false,
       message: "Error in Create Employee API",
-      error,
+      error: error.message,
     });
   }
 };

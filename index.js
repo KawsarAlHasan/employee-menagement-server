@@ -1,6 +1,5 @@
 const express = require("express");
 const dotenv = require("dotenv");
-// const mySqlPool = require("./config/db");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const mySqlPool = require("./confiq/db");

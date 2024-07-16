@@ -25,17 +25,17 @@ exports.getLossAndProfit = async (req, res) => {
       [startDate, endDate]
     );
 
-    let totalSalesAmount = 0;
+    let totalSales = 0;
     let onlineSalesAmount = 0;
-    let TotalSoOvAmount = 0;
+    let totalSoOvAmount = 0;
     sales.forEach((entry) => {
       const totalIncome = entry.totalCashCollect + entry.craditeSales;
 
       const totalOnline = entry.doordash + entry.uber + entry.foodPanda;
 
-      totalSalesAmount += totalIncome;
+      totalSales += totalIncome;
       onlineSalesAmount += totalOnline;
-      TotalSoOvAmount += entry.so_ov;
+      totalSoOvAmount += entry.so_ov;
     });
 
     const [salaries] = await db.query(
@@ -58,32 +58,66 @@ exports.getLossAndProfit = async (req, res) => {
       totalCostingsAmount += entry.amount;
     });
 
-    const totalDabit = totalSalesAmount + onlineSalesAmount;
-    const totalCradit = totalCostingsAmount + totalSalariesAmount;
+    const totalCradit = totalSales + onlineSalesAmount;
+    const totalDabit = totalCostingsAmount + totalSalariesAmount;
 
-    const difference = totalDabit - totalCradit;
+    const difference = totalCradit - totalDabit;
+
+    let totalProfit = 0;
+    let totalLoss = 0;
+    let netIncome = 0;
 
     if (difference >= 0) {
-      res.status(200).send({
-        success: true,
-        totalSalesAmount,
-        onlineSalesAmount,
-        totalCostingsAmount,
-        totalSalariesAmount,
-        totalCradit,
-        totalDabit,
-        profit: difference,
-      });
-    } else if (difference < 0) {
-      res.status(200).send({
-        success: true,
-        totalSalesAmount,
-        onlineSalesAmount,
-        totalCostingsAmount,
-        totalSalariesAmount,
-        lossAmount: -difference,
-      });
+      totalProfit = difference;
+      netIncome = difference;
+    } else if (difference <= 0) {
+      totalLoss = -difference;
+      netIncome = difference;
     }
+
+    // if (difference >= 0) {
+    //   res.status(200).send({
+    //     success: true,
+    //     totalSales,
+    //     toatlOnlineSales: onlineSalesAmount,
+    //     totalSalary: totalSalariesAmount,
+    //     foodCost: totalCostingsAmount,
+    //     shortOver: totalSoOvAmount,
+    //     totalDabit,
+    //     totalCradit,
+    //     totalProfit: difference,
+    //     totalLoss: "00",
+    //     netIncome: difference,
+    //   });
+    // } else if (difference < 0) {
+    //   res.status(200).send({
+    //     success: true,
+    //     totalSales,
+    //     toatlOnlineSales: onlineSalesAmount,
+    //     totalSalary: totalSalariesAmount,
+    //     foodCost: totalCostingsAmount,
+    //     shortOver: totalSoOvAmount,
+    //     totalDabit,
+    //     totalCradit,
+    //     totalProfit: "00",
+    //     totalLoss: -difference,
+    //     netIncome: difference,
+    //   });
+    // }
+
+    res.status(200).send({
+      success: true,
+      totalSales,
+      toatlOnlineSales: onlineSalesAmount,
+      totalSalary: totalSalariesAmount,
+      foodCost: totalCostingsAmount,
+      shortOver: totalSoOvAmount,
+      totalDabit,
+      totalCradit,
+      totalProfit,
+      totalLoss,
+      netIncome: difference,
+    });
   } catch (error) {
     res.status(500).send({
       success: false,
