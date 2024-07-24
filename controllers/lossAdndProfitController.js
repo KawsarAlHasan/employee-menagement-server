@@ -25,16 +25,28 @@ exports.getLossAndProfit = async (req, res) => {
       [startDate, endDate]
     );
 
+    const onlineSalesQuery =
+      "SELECT amount FROM onlineSales WHERE sales_id = ?";
+
+    const salesWithOnlineSales = await Promise.all(
+      sales.map(async (sale) => {
+        const [onlineSalesResults] = await db.query(onlineSalesQuery, [
+          sale.id,
+        ]);
+        return { ...sale, onlineSales: onlineSalesResults };
+      })
+    );
+
     let totalSales = 0;
     let onlineSalesAmount = 0;
     let totalSoOvAmount = 0;
-    sales.forEach((entry) => {
+    salesWithOnlineSales.forEach((entry) => {
       const totalIncome = entry.totalCashCollect + entry.craditeSales;
-
-      const totalOnline = entry.doordash + entry.uber + entry.foodPanda;
-
       totalSales += totalIncome;
-      onlineSalesAmount += totalOnline;
+      onlineSalesAmount += entry?.onlineSales?.reduce(
+        (total, sale) => total + sale?.amount,
+        0
+      );
       totalSoOvAmount += entry.so_ov;
     });
 
@@ -122,7 +134,7 @@ exports.getLossAndProfit = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in API Server",
-      error,
+      error: error.message,
     });
   }
 };
