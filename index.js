@@ -24,6 +24,7 @@ app.use("/api/v1/work-time", require("./routes/workTimeRoute"));
 app.use("/api/v1/sales", require("./routes/salesRoute"));
 app.use("/api/v1/partnership", require("./routes/partnershipRoute"));
 app.use("/api/v1/costing", require("./routes/costingRoute"));
+app.use("/api/v1/cost-list", require("./routes/costlistRoute"));
 app.use("/api/v1/food-cost", require("./routes/foodCostRoute"));
 app.use("/api/v1/profit", require("./routes/lossAndProfitRoute"));
 

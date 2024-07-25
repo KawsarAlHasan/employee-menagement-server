@@ -6,7 +6,6 @@ const {
   getSinglePartner,
   deletePartner,
 } = require("../controllers/partnershipController");
-const varifyAdmin = require("../middleware/varifyAdmin");
 
 const router = express.Router();
 
