@@ -50,17 +50,17 @@ exports.getAllCostings = async (req, res) => {
   }
 };
 
-// get DRplatform
-exports.getAllDRplatform = async (req, res) => {
+// get costName
+exports.getAllCostName = async (req, res) => {
   try {
     const [data] = await db.query(
-      `SELECT DRplatform FROM costings GROUP BY DRplatform`
+      `SELECT costName FROM costings GROUP BY costName`
     );
     res.status(200).send(data);
   } catch (error) {
     res.status(500).send({
       success: false,
-      message: "Error in getting DR Platform",
+      message: "Error in getting costName",
       error: error.message,
     });
   }
@@ -96,24 +96,36 @@ exports.getSingleCosting = async (req, res) => {
   }
 };
 
-// // create Costing
+// create costings
 exports.createCosting = async (req, res) => {
   try {
-    const { DRplatform, amount, date } = req.body;
-    if (!DRplatform || !amount || !date) {
-      return res.status(500).send({
+    const { costings, date } = req.body;
+    if (!Array.isArray(costings) || costings.length === 0 || !date) {
+      return res.status(400).send({
         success: false,
-        message: "Please provide all fields",
+        message: "Please provide an array of costings and a date",
       });
     }
 
-    const data = await db.query(
-      `INSERT INTO costings (DRplatform, amount, date) VALUES (?, ?, ?)`,
-      [DRplatform, amount, date]
-    );
+    const values = [];
+    const placeholders = costings
+      .map(({ costName, amount }) => {
+        if (!costName || !amount) {
+          throw new Error(
+            "Please provide costName and amount for each costing entry"
+          );
+        }
+        values.push(costName, amount, date);
+        return "(?, ?, ?)";
+      })
+      .join(", ");
+
+    const query = `INSERT INTO costings (costName, amount, date) VALUES ${placeholders}`;
+
+    const [data] = await db.query(query, values);
 
     if (!data) {
-      return res.status(404).send({
+      return res.status(500).send({
         success: false,
         message: "Error in INSERT QUERY",
       });
@@ -121,18 +133,18 @@ exports.createCosting = async (req, res) => {
 
     res.status(200).send({
       success: true,
-      message: "costings created successfully",
+      message: "Costings created successfully",
     });
   } catch (error) {
     res.status(500).send({
       success: false,
-      message: "Error in Creatting costings API",
-      error,
+      message: "Error in creating costings API",
+      error: error.message,
     });
   }
 };
 
-// // update costing
+// update costing
 exports.updateCosting = async (req, res) => {
   try {
     const costingId = req.params.id;
@@ -143,11 +155,11 @@ exports.updateCosting = async (req, res) => {
       });
     }
 
-    const { DRplatform, amount, date } = req.body;
+    const { costName, amount, date } = req.body;
 
     const data = await db.query(
-      `UPDATE costings SET DRplatform=?, amount=?, date=? WHERE id =? `,
-      [DRplatform, amount, date, costingId]
+      `UPDATE costings SET costName=?, amount=?, date=? WHERE id =? `,
+      [costName, amount, date, costingId]
     );
     if (!data) {
       return res.status(500).send({
@@ -168,7 +180,7 @@ exports.updateCosting = async (req, res) => {
   }
 };
 
-// // delete costing
+// delete costing
 exports.deleteCosting = async (req, res) => {
   try {
     const costingID = req.params.id;

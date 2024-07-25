@@ -5,13 +5,13 @@ const {
   createCosting,
   updateCosting,
   deleteCosting,
-  getAllDRplatform,
+  getAllCostName,
 } = require("../controllers/costingController");
 
 const router = express.Router();
 
 router.get("/all", getAllCostings);
-router.get("/drplatform", getAllDRplatform);
+router.get("/costname", getAllCostName);
 router.get("/:id", getSingleCosting);
 router.post("/create", createCosting);
 router.put("/update/:id", updateCosting);
