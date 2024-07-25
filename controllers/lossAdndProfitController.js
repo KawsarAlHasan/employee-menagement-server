@@ -70,8 +70,33 @@ exports.getLossAndProfit = async (req, res) => {
       totalCostingsAmount += entry.amount;
     });
 
+    // start food cost
+    const [foodCostResult] = await db.query(
+      "SELECT id FROM food_costs WHERE date >= ? AND date <= ?",
+      [startDate, endDate]
+    );
+    const vendorsQuery = "SELECT * FROM vendors WHERE food_cost_id = ?";
+    const foodCostWithVendors = await Promise.all(
+      foodCostResult.map(async (cost) => {
+        const [dataResults] = await db.query(vendorsQuery, [cost.id]);
+        return { ...cost, data: dataResults };
+      })
+    );
+
+    let totalFoodCostAmount = 0;
+    foodCostWithVendors.forEach((entry) => {
+      const totalFoodCosts = entry?.data?.reduce(
+        (total, cost) => total + cost?.vendor_amount,
+        0
+      );
+
+      totalFoodCostAmount += totalFoodCosts;
+    });
+    // end food cost
+
     const totalCradit = totalSales + onlineSalesAmount;
-    const totalDabit = totalCostingsAmount + totalSalariesAmount;
+    const totalDabit =
+      totalCostingsAmount + totalFoodCostAmount + totalSalariesAmount;
 
     const difference = totalCradit - totalDabit;
 
@@ -122,7 +147,8 @@ exports.getLossAndProfit = async (req, res) => {
       totalSales,
       toatlOnlineSales: onlineSalesAmount,
       totalSalary: totalSalariesAmount,
-      foodCost: totalCostingsAmount,
+      foodCost: totalFoodCostAmount,
+      othersCost: totalCostingsAmount,
       shortOver: totalSoOvAmount,
       totalDabit,
       totalCradit,

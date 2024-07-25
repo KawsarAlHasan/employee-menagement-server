@@ -45,7 +45,23 @@ exports.getAllCostings = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in Getting All Costings",
-      error,
+      error: error.message,
+    });
+  }
+};
+
+// get DRplatform
+exports.getAllDRplatform = async (req, res) => {
+  try {
+    const [data] = await db.query(
+      `SELECT DRplatform FROM costings GROUP BY DRplatform`
+    );
+    res.status(200).send(data);
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in getting DR Platform",
+      error: error.message,
     });
   }
 };
