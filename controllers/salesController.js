@@ -170,8 +170,14 @@ exports.updatesales = async (req, res) => {
         message: "salesID is required",
       });
     }
-    const { salesRegister, totalCashCollect, craditeSales, so_ov, date } =
-      req.body;
+    const {
+      salesRegister,
+      totalCashCollect,
+      craditeSales,
+      so_ov,
+      onlineSales,
+      date,
+    } = req.body;
 
     if (!date) {
       return res.status(500).send({
@@ -180,16 +186,35 @@ exports.updatesales = async (req, res) => {
       });
     }
 
-    const data = await db.query(
-      `UPDATE sales SET salesRegister=?, totalCashCollect=?, craditeSales=?, so_ov=?, date=? WHERE id =? `,
-      [salesRegister, totalCashCollect, craditeSales, so_ov, date, salesID]
-    );
-    if (!data) {
-      return res.status(500).send({
-        success: false,
-        message: "Error in update sales ",
-      });
-    }
+    const salesUpdateQuery = `UPDATE sales SET salesRegister=?, totalCashCollect=?, craditeSales=?, so_ov=?, date=? WHERE id =? `;
+    const salesValues = [
+      salesRegister,
+      totalCashCollect,
+      craditeSales,
+      so_ov,
+      date,
+      salesID,
+    ];
+
+    await db.query(salesUpdateQuery, salesValues);
+
+    // Delete existing vendors for this food cost id
+    const deleteOnlineSalesQuery = "DELETE FROM onlineSales WHERE sales_id = ?";
+    await db.query(deleteOnlineSalesQuery, [salesID]);
+
+    // Insert new onlineSales data
+
+    const onlineSalesQuery =
+      "INSERT INTO onlineSales (sales_id, name, amount) VALUES ?";
+
+    const dataValues = onlineSales.map((sale) => [
+      salesID,
+      sale.name,
+      sale.amount,
+    ]);
+
+    await db.query(onlineSalesQuery, [dataValues]);
+
     res.status(200).send({
       success: true,
       message: "sales updated successfully",
