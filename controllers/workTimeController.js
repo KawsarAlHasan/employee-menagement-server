@@ -18,8 +18,11 @@ exports.getAllWorkTime = async (req, res) => {
       query += " AND date = ?";
       params.push(paymentDate);
     }
-
     query += " ORDER BY id DESC";
+
+    const busn_id = req.businessId;
+    query += " AND busn_id = ?";
+    params.push(busn_id);
 
     const data = await db.query(query, params);
 

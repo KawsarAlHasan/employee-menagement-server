@@ -6,7 +6,12 @@ const { sendMail } = require("../middleware/sandEmail");
 // get all Employees
 exports.getAllEmployees = async (req, res) => {
   try {
-    const [data] = await db.query("SELECT * FROM employees");
+    const business_id = req.businessId;
+
+    const [data] = await db.query(
+      "SELECT * FROM employees WHERE business_id=?",
+      [business_id]
+    );
 
     if (!data || data.length === 0) {
       return res.status(404).send({
@@ -45,9 +50,13 @@ exports.getSingleEmployee = async (req, res) => {
         message: "Invalid or missing Employee ID",
       });
     }
-    const data = await db.query(`SELECT * FROM employees WHERE id=?`, [
-      employeeID,
-    ]);
+
+    const business_id = req.businessId;
+
+    const data = await db.query(
+      `SELECT * FROM employees WHERE id=? AND business_id=?`,
+      [employeeID, business_id]
+    );
     if (!data || data.length === 0) {
       return res.status(404).send({
         success: false,
@@ -101,15 +110,27 @@ exports.createEmployee = async (req, res) => {
       randomCode,
     };
 
-    const emailResult = await sendMail(emailData);
+    // const emailResult = await sendMail(emailData);
 
-    if (!emailResult.messageId) {
-      res.status(500).send("Failed to send email");
-    }
+    // if (!emailResult.messageId) {
+    //   res.status(500).send("Failed to send email");
+    // }
+
+    const business_id = req.businessId;
 
     const data = await db.query(
-      `INSERT INTO employees (name, email, password, emailPin, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, email, password, randomCode, phone, type, salaryType, salaryRate]
+      `INSERT INTO employees (business_id, name, email, password, emailPin, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        business_id,
+        name,
+        email,
+        password,
+        randomCode,
+        phone,
+        type,
+        salaryType,
+        salaryRate,
+      ]
     );
 
     if (!data) {
@@ -216,9 +237,20 @@ exports.updateEmployee = async (req, res) => {
     }
     const { name, email, phone, type, salaryType, salaryRate } = req.body;
 
+    const business_id = req.businessId;
+
     const data = await db.query(
-      `UPDATE employees SET name=?, email=?, phone=?, type=?, salaryType=?, salaryRate=? WHERE id =? `,
-      [name, email, phone, type, salaryType, salaryRate, employeeID]
+      `UPDATE employees SET name=?, email=?, phone=?, type=?, salaryType=?, salaryRate=? WHERE id =? AND business_id=?`,
+      [
+        name,
+        email,
+        phone,
+        type,
+        salaryType,
+        salaryRate,
+        employeeID,
+        business_id,
+      ]
     );
     if (!data) {
       return res.status(500).send({
@@ -250,7 +282,12 @@ exports.deleteEmployee = async (req, res) => {
       });
     }
 
-    await db.query(`DELETE FROM employees WHERE id=?`, [employeeId]);
+    const business_id = req.businessId;
+
+    await db.query(`DELETE FROM employees WHERE id=? AND business_id=?`, [
+      business_id,
+      employeeId,
+    ]);
     res.status(200).send({
       success: true,
       message: "Employee Deleted Successfully",

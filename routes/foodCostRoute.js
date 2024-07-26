@@ -5,12 +5,13 @@ const {
   deleteFoodCost,
   updateFoodCost,
 } = require("../controllers/foodCostController");
+const varifyEmployee = require("../middleware/varifyEmployee");
 
 const router = express.Router();
 
-router.post("/create", createFoodCost);
-router.get("/all", getAllFoodCost);
-router.put("/update/:id", updateFoodCost);
-router.delete("/delete/:id", deleteFoodCost);
+router.post("/create", varifyEmployee, createFoodCost);
+router.get("/all", varifyEmployee, getAllFoodCost);
+router.put("/update/:id", varifyEmployee, updateFoodCost);
+router.delete("/delete/:id", varifyEmployee, deleteFoodCost);
 
 module.exports = router;

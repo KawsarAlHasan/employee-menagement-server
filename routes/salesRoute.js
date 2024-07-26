@@ -6,13 +6,14 @@ const {
   updatesales,
   deletesales,
 } = require("../controllers/salesController");
+const varifyEmployee = require("../middleware/varifyEmployee");
 
 const router = express.Router();
 
-router.get("/all", getAllSales);
-router.get("/:id", getSingleSales);
-router.post("/create", createsales);
-router.put("/update/:id", updatesales);
-router.delete("/delete/:id", deletesales);
+router.get("/all", varifyEmployee, getAllSales);
+router.get("/:id", varifyEmployee, getSingleSales);
+router.post("/create", varifyEmployee, createsales);
+router.put("/update/:id", varifyEmployee, updatesales);
+router.delete("/delete/:id", varifyEmployee, deletesales);
 
 module.exports = router;

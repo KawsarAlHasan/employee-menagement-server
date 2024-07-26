@@ -7,14 +7,15 @@ const {
   deleteSalary,
   totalMyEarningsHoursAndPayment,
 } = require("../controllers/salariesController");
+const varifyEmployee = require("../middleware/varifyEmployee");
 
 const router = express.Router();
 
-router.get("/all", getAllSalaries);
-router.get("/my-earnings/:id", totalMyEarningsHoursAndPayment);
-router.get("/:id", getSingleSalaryByID);
-router.post("/create", createSalary);
-router.put("/update/:id", updateSalary);
-router.delete("/delete/:id", deleteSalary);
+router.get("/all", varifyEmployee, getAllSalaries);
+router.get("/my-earnings/:id", varifyEmployee, totalMyEarningsHoursAndPayment);
+router.get("/:id", varifyEmployee, getSingleSalaryByID);
+router.post("/create", varifyEmployee, createSalary);
+router.put("/update/:id", varifyEmployee, updateSalary);
+router.delete("/delete/:id", varifyEmployee, deleteSalary);
 
 module.exports = router;

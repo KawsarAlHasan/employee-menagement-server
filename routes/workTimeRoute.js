@@ -5,12 +5,13 @@ const {
   startWorkTime,
   endWorkTime,
 } = require("../controllers/workTimeController");
+const varifyEmployee = require("../middleware/varifyEmployee");
 
 const router = express.Router();
 
-router.get("/all", getAllWorkTime);
-router.post("/start", startWorkTime);
-router.put("/end", endWorkTime);
-router.get("/:id", getSingleWorkTimeByID);
+router.get("/all", varifyEmployee, getAllWorkTime);
+router.post("/start", varifyEmployee, startWorkTime);
+router.put("/end", varifyEmployee, endWorkTime);
+router.get("/:id", varifyEmployee, getSingleWorkTimeByID);
 
 module.exports = router;

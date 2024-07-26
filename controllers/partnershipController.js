@@ -3,7 +3,11 @@ const db = require("../confiq/db");
 // get all partners
 exports.getAllPartners = async (req, res) => {
   try {
-    const partners = await db.query("SELECT * FROM partnership");
+    const busn_id = req.businessId;
+    const partners = await db.query(
+      "SELECT * FROM partnership WHERE busn_id = ?",
+      [busn_id]
+    );
     if (!partners) {
       return res.status(404).send({
         success: false,
@@ -61,13 +65,17 @@ exports.addPartner = async (req, res) => {
   const { name, email, phone, percentage } = req.body;
 
   try {
+    const busn_id = req.businessId;
     // Chack percentage
     const [rows] = await db.query(
-      "SELECT SUM(percentage) as totalPercentage FROM partnership"
+      "SELECT SUM(percentage) as totalPercentage FROM partnership WHERE busn_id=?",
+      [busn_id]
     );
     const totalPercentage = rows[0].totalPercentage || 0;
 
-    const [data] = await db.query("SELECT * FROM employees");
+    const [data] = await db.query("SELECT * FROM employees WHERE busn_id =?", [
+      busn_id,
+    ]);
     const [filteredAdmin] = data.filter(
       (employee) => employee.type.toLowerCase() == "admin"
     );
@@ -79,21 +87,21 @@ exports.addPartner = async (req, res) => {
     // admin add
     if (totalPercentage === 0) {
       await db.query(
-        "INSERT INTO partnership (name, email, phone, percentage) VALUES (?, ?, ?, ?)",
-        [adminName, adminEmail, adminPhone, 100]
+        "INSERT INTO partnership (name, email, phone, percentage, busn_id) VALUES (?, ?, ?, ?, ?)",
+        [adminName, adminEmail, adminPhone, 100, busn_id]
       );
     }
 
     // Reducing the percentage of Admin
     await db.query(
-      "UPDATE partnership SET percentage = percentage - ? WHERE email = ?",
-      [percentage, adminEmail]
+      "UPDATE partnership SET percentage = percentage - ? WHERE email = ? AND busn_id =?",
+      [percentage, adminEmail, busn_id]
     );
 
     // add new partner
     await db.query(
-      "INSERT INTO partnership ( name, email, phone, percentage) VALUES (?, ?, ?, ?)",
-      [name, email, phone, percentage]
+      "INSERT INTO partnership ( name, email, phone, percentage, busn_id) VALUES (?, ?, ?, ?, ?)",
+      [name, email, phone, percentage, busn_id]
     );
 
     res.status(201).json({
@@ -109,6 +117,7 @@ exports.addPartner = async (req, res) => {
 // Update Partner
 exports.updatePartner = async (req, res) => {
   try {
+    const busn_id = req.businessId;
     const { name, email, phone, percentage } = req.body;
     const partnerID = req.params.id;
 
@@ -121,8 +130,8 @@ exports.updatePartner = async (req, res) => {
 
     // Get current partner data
     const [getPartnerdata] = await db.query(
-      `SELECT percentage FROM partnership WHERE id = ?`,
-      [partnerID]
+      `SELECT percentage FROM partnership WHERE id = ? AND busn_id =?`,
+      [partnerID, busn_id]
     );
 
     if (getPartnerdata.length === 0) {
@@ -133,7 +142,9 @@ exports.updatePartner = async (req, res) => {
     }
 
     // Get admin data
-    const [data] = await db.query("SELECT * FROM employees");
+    const [data] = await db.query("SELECT * FROM employees WHERE busn_id = ?", [
+      busn_id,
+    ]);
     const [filteredAdmin] = data.filter(
       (employee) => employee.type.toLowerCase() == "admin"
     );
@@ -144,8 +155,8 @@ exports.updatePartner = async (req, res) => {
 
     // Update partner data
     const [updateResult] = await db.query(
-      `UPDATE partnership SET name = ?, email = ?, phone = ?, percentage = ? WHERE id = ?`,
-      [name, email, phone, percentage, partnerID]
+      `UPDATE partnership SET name = ?, email = ?, phone = ?, percentage = ? WHERE id = ? AND busn_id=?`,
+      [name, email, phone, percentage, partnerID, busn_id]
     );
 
     if (updateResult.affectedRows === 0) {
@@ -158,13 +169,13 @@ exports.updatePartner = async (req, res) => {
     // Update admin percentage
     if (difference > 0) {
       await db.query(
-        "UPDATE partnership SET percentage = percentage - ? WHERE email = ?",
-        [difference, adminEmail]
+        "UPDATE partnership SET percentage = percentage - ? WHERE email = ? AND busn_id =?",
+        [difference, adminEmail, busn_id]
       );
     } else if (difference < 0) {
       await db.query(
-        "UPDATE partnership SET percentage = percentage + ? WHERE email = ?",
-        [-difference, adminEmail]
+        "UPDATE partnership SET percentage = percentage + ? WHERE email = ? AND busn_id=?",
+        [-difference, adminEmail, busn_id]
       );
     }
 
@@ -184,6 +195,7 @@ exports.updatePartner = async (req, res) => {
 // delete partner
 exports.deletePartner = async (req, res) => {
   try {
+    const busn_id = req.businessId;
     const partnerId = req.params.id;
     if (!partnerId) {
       return res.status(404).send({
@@ -199,7 +211,9 @@ exports.deletePartner = async (req, res) => {
 
     const partnerPer = partnerPercentage[0].percentage;
 
-    const [data] = await db.query("SELECT * FROM employees");
+    const [data] = await db.query("SELECT * FROM employees WHERE busn_id=?", [
+      busn_id,
+    ]);
     const [filteredAdmin] = data.filter(
       (employee) => employee.type.toLowerCase() == "admin"
     );

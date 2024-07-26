@@ -18,9 +18,11 @@ exports.getAllCostings = async (req, res) => {
       ? new Date(year, month - 1, day, 23, 59, 59)
       : new Date(year, month, 0, 23, 59, 59);
 
+    const busn_id = req.businessId;
+
     const [data] = await db.query(
-      "SELECT * FROM costings WHERE date >= ? AND date <= ? ORDER BY id DESC",
-      [startDate, endDate]
+      "SELECT * FROM costings WHERE date >= ? AND date <= ? AND busn_id=? ORDER BY id DESC",
+      [startDate, endDate, busn_id]
     );
 
     if (!data || data.length === 0) {
@@ -51,22 +53,6 @@ exports.getAllCostings = async (req, res) => {
   }
 };
 
-// get costName
-exports.getAllCostName = async (req, res) => {
-  try {
-    const [data] = await db.query(
-      `SELECT costName FROM costings GROUP BY costName`
-    );
-    res.status(200).send(data);
-  } catch (error) {
-    res.status(500).send({
-      success: false,
-      message: "Error in getting costName",
-      error: error.message,
-    });
-  }
-};
-
 // get single Costing by id
 exports.getSingleCosting = async (req, res) => {
   try {
@@ -77,10 +63,11 @@ exports.getSingleCosting = async (req, res) => {
         message: "costingID is required",
       });
     }
+
     const data = await db.query(`SELECT * FROM costings WHERE id=?`, [
       costingID,
     ]);
-    if (!data || data.length === 0) {
+    if (!data[0] || data[0].length === 0) {
       return res.status(404).send({
         success: false,
         message: "No Costing found",
@@ -108,6 +95,8 @@ exports.createCosting = async (req, res) => {
       });
     }
 
+    const busn_id = req.businessId;
+
     const values = [];
     const placeholders = costings
       .map(({ costName, amount }) => {
@@ -116,12 +105,12 @@ exports.createCosting = async (req, res) => {
             "Please provide costName and amount for each costing entry"
           );
         }
-        values.push(costName, amount, date);
-        return "(?, ?, ?)";
+        values.push(costName, amount, date, busn_id);
+        return "(?, ?, ?, ?)";
       })
       .join(", ");
 
-    const query = `INSERT INTO costings (costName, amount, date) VALUES ${placeholders}`;
+    const query = `INSERT INTO costings (costName, amount, date, busn_id) VALUES ${placeholders}`;
 
     const [data] = await db.query(query, values);
 

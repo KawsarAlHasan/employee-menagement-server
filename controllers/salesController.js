@@ -18,9 +18,11 @@ exports.getAllSales = async (req, res) => {
       ? new Date(year, month - 1, day, 23, 59, 59)
       : new Date(year, month, 0, 23, 59, 59);
 
+    const busn_id = req.businessId;
+
     const [data] = await db.query(
-      "SELECT * FROM sales WHERE date >= ? AND date <= ? ORDER BY id DESC",
-      [startDate, endDate]
+      "SELECT * FROM sales WHERE date >= ? AND date <= ? AND busn_id = ? ORDER BY id DESC",
+      [startDate, endDate, busn_id]
     );
     if (!data || data.length == 0) {
       return res.status(404).send({
@@ -125,14 +127,17 @@ exports.createsales = async (req, res) => {
       });
     }
 
+    const busn_id = req.businessId;
+
     const salesQuery =
-      "INSERT INTO sales (salesRegister, totalCashCollect, craditeSales, so_ov, date) VALUES (?, ?, ?, ?, ?)";
+      "INSERT INTO sales (salesRegister, totalCashCollect, craditeSales, so_ov, date, busn_id) VALUES (?, ?, ?, ?, ?, ?)";
     const salesValues = [
       salesRegister,
       totalCashCollect,
       craditeSales,
       so_ov,
       date,
+      busn_id,
     ];
 
     const [salesResult] = await db.query(salesQuery, salesValues);

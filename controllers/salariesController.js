@@ -17,12 +17,16 @@ exports.getAllSalaries = async (req, res) => {
     : new Date(year, month, 0, 23, 59, 59);
   try {
     let query = `SELECT salaries.*, employees.name AS employeeName FROM salaries JOIN employees ON salaries.employeeID = employees.id WHERE date >= ? AND date <= ? ORDER BY id DESC`;
-    const params = [startDate, endDate];
+    let params = [startDate, endDate];
 
     if (employeeID) {
       query += " AND employeeID = ?";
       params.push(employeeID);
     }
+
+    const busn_id = req.businessId;
+    query += " AND busn_id = ?";
+    params.push(busn_id);
 
     const rows = await db.query(query, params);
 
@@ -95,9 +99,11 @@ exports.createSalary = async (req, res) => {
       });
     }
 
+    const busn_id = req.businessId;
+
     const data = await db.query(
-      `INSERT INTO salaries (employeeID, amount, payBy, date) VALUES (?, ?, ?, ?)`,
-      [employeeID, amount, payBy, date]
+      `INSERT INTO salaries (employeeID, amount, payBy, date, busn_id) VALUES (?, ?, ?, ?, ?)`,
+      [employeeID, amount, payBy, date, busn_id]
     );
 
     if (!data) {

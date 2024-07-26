@@ -20,9 +20,11 @@ exports.getLossAndProfit = async (req, res) => {
       ? new Date(year, month - 1, day, 23, 59, 59)
       : new Date(year, month, 0, 23, 59, 59);
 
+    const busn_id = req.businessId;
+
     const [sales] = await db.query(
-      "SELECT * FROM sales WHERE date >= ? AND date <= ?",
-      [startDate, endDate]
+      "SELECT * FROM sales WHERE date >= ? AND date <= ? AND busn_id = ?",
+      [startDate, endDate, busn_id]
     );
 
     const onlineSalesQuery =
@@ -51,8 +53,8 @@ exports.getLossAndProfit = async (req, res) => {
     });
 
     const [salaries] = await db.query(
-      "SELECT amount FROM salaries WHERE date >= ? AND date <= ?",
-      [startDate, endDate]
+      "SELECT amount FROM salaries WHERE date >= ? AND date <= ? AND busn_id = ?",
+      [startDate, endDate, busn_id]
     );
 
     let totalSalariesAmount = 0;
@@ -61,8 +63,8 @@ exports.getLossAndProfit = async (req, res) => {
     });
 
     const [costings] = await db.query(
-      "SELECT amount FROM costings WHERE date >= ? AND date <= ?",
-      [startDate, endDate]
+      "SELECT amount FROM costings WHERE date >= ? AND date <= ? AND busn_id = ?",
+      [startDate, endDate, busn_id]
     );
 
     let totalCostingsAmount = 0;
@@ -72,8 +74,8 @@ exports.getLossAndProfit = async (req, res) => {
 
     // start food cost
     const [foodCostResult] = await db.query(
-      "SELECT id FROM food_costs WHERE date >= ? AND date <= ?",
-      [startDate, endDate]
+      "SELECT id FROM food_costs WHERE date >= ? AND date <= ? AND busn_id = ?",
+      [startDate, endDate, busn_id]
     );
     const vendorsQuery = "SELECT * FROM vendors WHERE food_cost_id = ?";
     const foodCostWithVendors = await Promise.all(

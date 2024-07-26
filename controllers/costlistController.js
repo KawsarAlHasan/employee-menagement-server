@@ -3,12 +3,7 @@ const db = require("../confiq/db");
 // get all Costings
 exports.getAllCostingsList = async (req, res) => {
   try {
-    const decodedEmployee = req?.decodedemployee?.email;
-    const [result] = await db.query(
-      `SELECT business_id FROM employees WHERE email=?`,
-      [decodedEmployee]
-    );
-    const busn_id = result[0]?.business_id;
+    const busn_id = req.businessId;
 
     const [data] = await db.query(
       "SELECT * FROM cost_list WHERE busn_id=? ORDER BY id DESC",
@@ -37,12 +32,7 @@ exports.getAllCostingsList = async (req, res) => {
 // create costings
 exports.createCostingList = async (req, res) => {
   try {
-    const decodedEmployee = req?.decodedemployee?.email;
-    const [result] = await db.query(
-      `SELECT business_id FROM employees WHERE email=?`,
-      [decodedEmployee]
-    );
-    const busn_id = result[0]?.business_id;
+    const busn_id = req.businessId;
 
     const { name } = req.body;
     if (!name) {
@@ -88,12 +78,7 @@ exports.updateCostingList = async (req, res) => {
       });
     }
 
-    const decodedEmployee = req?.decodedemployee?.email;
-    const [result] = await db.query(
-      `SELECT business_id FROM employees WHERE email=?`,
-      [decodedEmployee]
-    );
-    const busn_id = result[0]?.business_id;
+    const busn_id = req.businessId;
 
     const { name } = req.body;
 
@@ -131,12 +116,7 @@ exports.deleteCostList = async (req, res) => {
       });
     }
 
-    const decodedEmployee = req?.decodedemployee?.email;
-    const [result] = await db.query(
-      `SELECT business_id FROM employees WHERE email=?`,
-      [decodedEmployee]
-    );
-    const busn_id = result[0]?.business_id;
+    const busn_id = req.businessId;
 
     await db.query(`DELETE FROM cost_list WHERE id=? AND busn_id=?`, [
       costingID,

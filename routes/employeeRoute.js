@@ -12,12 +12,12 @@ const varifyEmployee = require("../middleware/varifyEmployee");
 
 const router = express.Router();
 
-router.get("/all", getAllEmployees);
+router.get("/all", varifyEmployee, getAllEmployees);
 router.get("/me", varifyEmployee, getMeEmployee);
-router.get("/:id", getSingleEmployee);
-router.patch("/create", createEmployee);
+router.get("/:id", varifyEmployee, getSingleEmployee);
+router.patch("/create", varifyEmployee, createEmployee);
 router.post("/login", employeeLogin);
-router.put("/update/:id", updateEmployee);
-router.delete("/delete/:id", deleteEmployee);
+router.put("/update/:id", varifyEmployee, updateEmployee);
+router.delete("/delete/:id", varifyEmployee, deleteEmployee);
 
 module.exports = router;

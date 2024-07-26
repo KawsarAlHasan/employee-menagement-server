@@ -12,8 +12,11 @@ exports.createFoodCost = async (req, res) => {
       });
     }
 
-    const foodCostQuery = "INSERT INTO food_costs (name, date) VALUES (?, ?)";
-    const foodCostValues = [name, date];
+    const busn_id = req.businessId;
+
+    const foodCostQuery =
+      "INSERT INTO food_costs (name, date, busn_id) VALUES (?, ?, ?)";
+    const foodCostValues = [name, date, busn_id];
 
     const [foodCostResult] = await db.query(foodCostQuery, foodCostValues);
     const foodCostsId = foodCostResult.insertId;
@@ -60,9 +63,11 @@ exports.getAllFoodCost = async (req, res) => {
       ? new Date(year, month - 1, day, 23, 59, 59)
       : new Date(year, month, 0, 23, 59, 59);
 
+    const busn_id = req.businessId;
+
     const [foodCostResult] = await db.query(
-      "SELECT * FROM food_costs WHERE date >= ? AND date <= ? ORDER BY id DESC",
-      [startDate, endDate]
+      "SELECT * FROM food_costs WHERE date >= ? AND date <= ? AND busn_id =? ORDER BY id DESC",
+      [startDate, endDate, busn_id]
     );
     if (!foodCostResult || foodCostResult.length == 0) {
       return res.status(404).send({
