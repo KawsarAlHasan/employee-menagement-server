@@ -18,11 +18,12 @@ exports.getAllCostings = async (req, res) => {
       ? new Date(year, month - 1, day, 23, 59, 59)
       : new Date(year, month, 0, 23, 59, 59);
 
-    const data = await db.query(
+    const [data] = await db.query(
       "SELECT * FROM costings WHERE date >= ? AND date <= ?",
       [startDate, endDate]
     );
-    if (!data) {
+
+    if (!data || data.length === 0) {
       return res.status(404).send({
         success: false,
         message: "No Costings found",
@@ -30,16 +31,16 @@ exports.getAllCostings = async (req, res) => {
     }
 
     let totalCostingsAmount = 0;
-    data[0].forEach((entry) => {
+    data.forEach((entry) => {
       totalCostingsAmount += entry.amount;
     });
 
     res.status(200).send({
       success: true,
       message: "Get All Costings",
-      totalCostings: data[0].length,
+      totalCostings: data.length,
       totalCostingsAmount,
-      data: data[0],
+      data: data,
     });
   } catch (error) {
     res.status(500).send({
