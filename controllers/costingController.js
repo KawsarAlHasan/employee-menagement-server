@@ -19,7 +19,7 @@ exports.getAllCostings = async (req, res) => {
       : new Date(year, month, 0, 23, 59, 59);
 
     const [data] = await db.query(
-      "SELECT * FROM costings WHERE date >= ? AND date <= ?",
+      "SELECT * FROM costings WHERE date >= ? AND date <= ? ORDER BY id DESC",
       [startDate, endDate]
     );
 

@@ -61,7 +61,7 @@ exports.getAllFoodCost = async (req, res) => {
       : new Date(year, month, 0, 23, 59, 59);
 
     const [foodCostResult] = await db.query(
-      "SELECT * FROM food_costs WHERE date >= ? AND date <= ?",
+      "SELECT * FROM food_costs WHERE date >= ? AND date <= ? ORDER BY id DESC",
       [startDate, endDate]
     );
     if (!foodCostResult || foodCostResult.length == 0) {

@@ -16,7 +16,7 @@ exports.getAllSalaries = async (req, res) => {
     ? new Date(year, month - 1, day, 23, 59, 59)
     : new Date(year, month, 0, 23, 59, 59);
   try {
-    let query = `SELECT salaries.*, employees.name AS employeeName FROM salaries JOIN employees ON salaries.employeeID = employees.id WHERE date >= ? AND date <= ?`;
+    let query = `SELECT salaries.*, employees.name AS employeeName FROM salaries JOIN employees ON salaries.employeeID = employees.id WHERE date >= ? AND date <= ? ORDER BY id DESC`;
     const params = [startDate, endDate];
 
     if (employeeID) {
