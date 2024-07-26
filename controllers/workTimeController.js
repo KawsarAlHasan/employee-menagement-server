@@ -21,12 +21,13 @@ exports.getAllWorkTime = async (req, res) => {
 
     const data = await db.query(query, params);
 
-    if (!data) {
+    if (!data[0] || data[0].length == 0) {
       return res.status(404).send({
         success: false,
         message: "No work hours found",
       });
     }
+
     res.status(200).send({
       success: true,
       message: "All work hours",

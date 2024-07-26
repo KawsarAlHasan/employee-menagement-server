@@ -10,9 +10,10 @@ exports.getAllCostingsList = async (req, res) => {
     );
     const busn_id = result[0]?.business_id;
 
-    const [data] = await db.query("SELECT * FROM cost_list WHERE busn_id=?", [
-      busn_id,
-    ]);
+    const [data] = await db.query(
+      "SELECT * FROM cost_list WHERE busn_id=? ORDER BY id DESC",
+      [busn_id]
+    );
     if (!data || data.length === 0) {
       return res.status(404).send({
         success: false,

@@ -26,6 +26,13 @@ exports.getAllSalaries = async (req, res) => {
 
     const rows = await db.query(query, params);
 
+    if (!rows[0] || rows[0].length === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "No Salary found",
+      });
+    }
+
     let totalSalariesAmount = 0;
     rows[0].forEach((entry) => {
       totalSalariesAmount += entry.amount;

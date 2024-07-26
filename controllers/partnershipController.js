@@ -39,7 +39,7 @@ exports.getSinglePartner = async (req, res) => {
     const data = await db.query(`SELECT * FROM partnership WHERE id=?`, [
       partnerID,
     ]);
-    if (!data || data.length === 0) {
+    if (!data[0] || data[0].length === 0) {
       return res.status(404).send({
         success: false,
         message: "No partner found",
