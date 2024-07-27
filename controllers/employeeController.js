@@ -236,22 +236,13 @@ exports.updateEmployee = async (req, res) => {
         message: "Employee ID is requied",
       });
     }
-    const { name, email, phone, type, salaryType, salaryRate } = req.body;
-
+    const { name, phone, type, salaryType, salaryRate } = req.body;
+    business_id;
     const business_id = req.businessId;
 
     const data = await db.query(
-      `UPDATE employees SET name=?, email=?, phone=?, type=?, salaryType=?, salaryRate=? WHERE id =? AND business_id=?`,
-      [
-        name,
-        email,
-        phone,
-        type,
-        salaryType,
-        salaryRate,
-        employeeID,
-        business_id,
-      ]
+      `UPDATE employees SET name=?, phone=?, type=?, salaryType=?, salaryRate=? WHERE id =? AND business_id=?`,
+      [name, phone, type, salaryType, salaryRate, employeeID]
     );
     if (!data) {
       return res.status(500).send({
@@ -267,6 +258,60 @@ exports.updateEmployee = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in Update Employee ",
+      error,
+    });
+  }
+};
+
+exports.updateEmployeePassword = async (req, res) => {
+  try {
+    const employeeID = req.params.id;
+    if (!employeeID) {
+      return res.status(404).send({
+        success: false,
+        message: "Employee ID is requied",
+      });
+    }
+    const { old_password, new_password } = req.body;
+    const type = "admin";
+    const [data] = await db.query(
+      "SELECT password FROM employees WHERE id =? AND type != ?",
+      [employeeID, type]
+    );
+
+    const checkPassword = data[0]?.password;
+
+    const hashedPassword = await bcrypt.hash(old_password, 10);
+
+    const isMatch = await bcrypt.compare(checkPassword, hashedPassword);
+
+    if (!isMatch) {
+      return res.status(403).json({
+        success: false,
+        error: "Your Old Password is not correct",
+      });
+    }
+
+    const [result] = await db.query(
+      `UPDATE employees SET password=? WHERE id =?`,
+      [new_password, employeeID]
+    );
+
+    if (!result) {
+      return res.status(403).json({
+        success: false,
+        error: "Something went wrong",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Employee password updated successfully",
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in password Update Employee ",
       error,
     });
   }
@@ -305,7 +350,8 @@ exports.deleteEmployee = async (req, res) => {
 // create Admmin
 exports.createAdmins = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { business_name, business_address, name, email, password, phone } =
+      req.body;
 
     if (!name || !email || !password || !phone) {
       return res.status(500).send({
@@ -321,6 +367,8 @@ exports.createAdmins = async (req, res) => {
     const randomCode = Math.floor(Math.random() * (max - min + 1)) + min;
 
     const emailData = {
+      business_name,
+      business_address,
       email,
       name,
       password,
@@ -341,17 +389,20 @@ exports.createAdmins = async (req, res) => {
 
     const business_id = businessData[0].business_id + 1; /// Last business data + 1
 
-    const data = await db.query(
-      `INSERT INTO employees (business_id, name, email, password, emailPin, phone, type) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [business_id, name, email, password, randomCode, phone, type]
+    await db.query(
+      `INSERT INTO employees (business_name, business_address, business_id, name, email, password, emailPin, phone, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        business_name,
+        business_address,
+        business_id,
+        name,
+        email,
+        password,
+        randomCode,
+        phone,
+        type,
+      ]
     );
-
-    if (!data) {
-      return res.status(404).send({
-        success: false,
-        message: "Error in INSERT QUERY",
-      });
-    }
 
     res.status(200).send({
       success: true,
@@ -362,6 +413,101 @@ exports.createAdmins = async (req, res) => {
       success: false,
       message: "Error in Create Admin API",
       error: error.message,
+    });
+  }
+};
+
+exports.updateAdmins = async (req, res) => {
+  try {
+    const employeeID = req.params.id;
+    if (!employeeID) {
+      return res.status(404).send({
+        success: false,
+        message: "Admin ID is requied",
+      });
+    }
+
+    const { business_name, business_address, name, phone } = req.body;
+
+    const business_id = req.businessId;
+
+    const [resultsData] = await db.query(
+      `UPDATE employees SET business_name=?, business_address=?, name=?, phone=? WHERE id =? AND business_id=?`,
+      [business_name, business_address, name, phone, employeeID, business_id]
+    );
+
+    if (!resultsData) {
+      return res.status(403).json({
+        success: false,
+        error: "Something went wrong",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Employee updated successfully",
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in Update Employee ",
+      error,
+    });
+  }
+};
+
+exports.updateAdminPassword = async (req, res) => {
+  try {
+    const employeeID = req.params.id;
+    if (!employeeID) {
+      return res.status(404).send({
+        success: false,
+        message: "Admin ID is requied",
+      });
+    }
+    const busn_id = req.businessId;
+    const { old_password, new_password } = req.body;
+    const type = "admin";
+
+    const [data] = await db.query(
+      "SELECT password FROM employees WHERE id =? AND type=?",
+      [employeeID, type]
+    );
+
+    const checkPassword = data[0]?.password;
+
+    const hashedPassword = await bcrypt.hash(old_password, 10);
+
+    const isMatch = await bcrypt.compare(checkPassword, hashedPassword);
+
+    if (!isMatch) {
+      return res.status(403).json({
+        success: false,
+        error: "Your Old Password is not correct",
+      });
+    }
+
+    const [result] = await db.query(
+      `UPDATE employees SET password=? WHERE id =? AND business_id=?`,
+      [new_password, employeeID, busn_id]
+    );
+
+    if (!result) {
+      return res.status(403).json({
+        success: false,
+        error: "Something went wrong",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Admin password updated successfully",
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in password Update Admin ",
+      error,
     });
   }
 };
