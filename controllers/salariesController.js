@@ -16,7 +16,7 @@ exports.getAllSalaries = async (req, res) => {
     ? new Date(year, month - 1, day, 23, 59, 59)
     : new Date(year, month, 0, 23, 59, 59);
   try {
-    let query = `SELECT salaries.*, employees.name AS employeeName FROM salaries JOIN employees ON salaries.employeeID = employees.id WHERE date >= ? AND date <= ? ORDER BY id DESC`;
+    let query = `SELECT salaries.*, employees.name AS employeeName FROM salaries JOIN employees ON salaries.employeeID = employees.id WHERE date >= ? AND date <= ?`;
     let params = [startDate, endDate];
 
     if (employeeID) {
@@ -25,15 +25,22 @@ exports.getAllSalaries = async (req, res) => {
     }
 
     const busn_id = req.businessId;
-    query += " AND busn_id = ?";
-    params.push(busn_id);
+
+    // Add busn_id filter if provided, but before ORDER BY
+    if (busn_id) {
+      query += " AND busn_id = ?";
+      params.push(busn_id);
+    }
+
+    query += " ORDER BY id DESC"; // Move ORDER BY to the end
 
     const rows = await db.query(query, params);
 
     if (!rows[0] || rows[0].length === 0) {
-      return res.status(404).send({
-        success: false,
+      return res.status(200).send({
+        success: true,
         message: "No Salary found",
+        data: rows[0],
       });
     }
 
@@ -73,12 +80,16 @@ exports.getSingleSalaryByID = async (req, res) => {
     ]);
     if (!data || data.length === 0) {
       return res.status(404).send({
-        success: false,
+        success: true,
         message: "No Salary found",
+        salary: data[0],
       });
     }
-    const salary = data[0];
-    res.status(200).send(salary[0]);
+    res.status(200).send({
+      success: true,
+      message: "No Salary found",
+      salary: data[0],
+    });
   } catch (error) {
     res.status(500).send({
       success: false,

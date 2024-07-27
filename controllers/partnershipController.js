@@ -8,10 +8,11 @@ exports.getAllPartners = async (req, res) => {
       "SELECT * FROM partnership WHERE busn_id = ?",
       [busn_id]
     );
-    if (!partners) {
-      return res.status(404).send({
+    if (!partners || partners.length == 0) {
+      return res.status(200).send({
         success: false,
         message: "No Partners found",
+        data: partners[0],
       });
     }
 

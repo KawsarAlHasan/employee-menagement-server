@@ -26,15 +26,16 @@ exports.getAllCostings = async (req, res) => {
     );
 
     if (!data || data.length === 0) {
-      return res.status(404).send({
-        success: false,
+      return res.status(200).send({
+        success: true,
         message: "No Costings found",
+        data: data,
       });
     }
 
     let totalCostingsAmount = 0;
     data.forEach((entry) => {
-      totalCostingsAmount += entry.amount;
+      totalCostingsAmount += parseFloat(entry.amount);
     });
 
     res.status(200).send({

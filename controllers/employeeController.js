@@ -14,9 +14,10 @@ exports.getAllEmployees = async (req, res) => {
     );
 
     if (!data || data.length === 0) {
-      return res.status(404).send({
-        success: false,
+      return res.status(200).send({
+        success: true,
         message: "No Employees found",
+        data: data[0],
       });
     }
 

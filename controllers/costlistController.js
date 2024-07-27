@@ -10,9 +10,10 @@ exports.getAllCostingsList = async (req, res) => {
       [busn_id]
     );
     if (!data || data.length === 0) {
-      return res.status(404).send({
-        success: false,
+      return res.status(200).send({
+        success: true,
         message: "No cost list found",
+        data: data,
       });
     }
     res.status(200).send({
