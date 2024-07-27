@@ -110,11 +110,11 @@ exports.createEmployee = async (req, res) => {
       randomCode,
     };
 
-    // const emailResult = await sendMail(emailData);
+    const emailResult = await sendMail(emailData);
 
-    // if (!emailResult.messageId) {
-    //   res.status(500).send("Failed to send email");
-    // }
+    if (!emailResult.messageId) {
+      res.status(500).send("Failed to send email");
+    }
 
     const business_id = req.businessId;
 
@@ -328,11 +328,11 @@ exports.createAdmins = async (req, res) => {
       randomCode,
     };
 
-    // const emailResult = await sendMail(emailData);
+    const emailResult = await sendMail(emailData);
 
-    // if (!emailResult.messageId) {
-    //   res.status(500).send("Failed to send email");
-    // }
+    if (!emailResult.messageId) {
+      res.status(500).send("Failed to send email");
+    }
 
     const [businessData] = await db.query(
       "SELECT business_id FROM employees ORDER BY business_id DESC"

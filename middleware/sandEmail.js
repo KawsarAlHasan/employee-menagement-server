@@ -48,26 +48,55 @@ async function sendMail(data) {
                       <p>Welcome to joining our company. Your information given below:</p>
                       <h3>Details:</h3>
                       <ul>
-                          <li><strong>Name:</strong> ${data.name}</li>
-                          <li><strong>Email:</strong> ${data.email}</li>
-                          <li><strong>Phone:</strong> ${data.phone}</li>
-                          <li><strong>Role:</strong> ${data.type}</li>
-                          <li><strong>Salary:</strong> ${data.salaryType}</li>
-                          <li><strong>Salary Rate:</strong>$ ${data.salaryRate}</li>
+                          <li><strong>Name:</strong> ${data?.name}</li>
+                          <li><strong>Email:</strong> ${data?.email}</li>
+                          <li><strong>Phone:</strong> ${data?.phone}</li>
+                          <li><strong>Role:</strong> ${data?.type}</li>
+                          ${
+                            data.type !== "admin" ? (
+                              <>
+                                <li>
+                                  <strong>Salary:</strong> ${data?.salaryType}
+                                </li>
+                                <li>
+                                  <strong>Salary Rate:</strong>$ $
+                                  {data?.salaryRate}
+                                </li>
+                              </>
+                            ) : (
+                              ""
+                            )
+                          }
                       </ul>
                       <p>Now you can login into your dashboard. Your login credentials are:</p>
                       <h3>Login Credential:</h3>
                       <ul>
-                          <li><strong>Email:</strong> ${data.email}</li>
-                          <li><strong>Password:</strong> ${data.password}</li>
-                          <li><strong>PIN Code:</strong> ${data.randomCode}</li>
+                          <li><strong>Email:</strong> ${data?.email}</li>
+                          <li><strong>Password:</strong> ${data?.password}</li>
+                          <li><strong>PIN Code:</strong> ${
+                            data?.randomCode
+                          }</li>
                       </ul>
                       <p>You need to clock-in when you start work. Our clocking apps:</p>
                       <ul>
                           <li><strong>Google Play Store:</strong> <a href="https://play.google.com/store/apps/">Play Store link</a></li>
                           <li><strong>Apple Store:</strong> <a href="https://www.apple.com/app-store/">Apple Store link</a></li>
                       </ul>
-                      <p>If you have any questions or need further assistance, please do not hesitate to contact the admin.</p>
+                      ${
+                        data.type !== "admin" ? (
+                          <p>
+                            If you have any questions or need further
+                            assistance, please do not hesitate to contact the
+                            admin.
+                          </p>
+                        ) : (
+                          <p>
+                            If you have any questions, Please knock aou support
+                            team.
+                          </p>
+                        )
+                      }
+                      
                       <p>Best regards,</p>
                       <p>Abu,<br>
                       Owner of RMS,<br>
