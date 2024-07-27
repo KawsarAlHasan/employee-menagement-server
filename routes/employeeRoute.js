@@ -7,6 +7,7 @@ const {
   deleteEmployee,
   employeeLogin,
   getMeEmployee,
+  createAdmins,
 } = require("../controllers/employeeController");
 const varifyEmployee = require("../middleware/varifyEmployee");
 
@@ -16,6 +17,7 @@ router.get("/all", varifyEmployee, getAllEmployees);
 router.get("/me", varifyEmployee, getMeEmployee);
 router.get("/:id", varifyEmployee, getSingleEmployee);
 router.patch("/create", varifyEmployee, createEmployee);
+router.post("/new-admin/create", createAdmins);
 router.post("/login", employeeLogin);
 router.put("/update/:id", varifyEmployee, updateEmployee);
 router.delete("/delete/:id", varifyEmployee, deleteEmployee);

@@ -300,3 +300,67 @@ exports.deleteEmployee = async (req, res) => {
     });
   }
 };
+
+// create Admmin
+exports.createAdmins = async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    if (!name || !email || !password || !phone) {
+      return res.status(500).send({
+        success: false,
+        message: "Please provide all fields",
+      });
+    }
+
+    const type = "admin";
+
+    const min = 1000;
+    const max = 9999;
+    const randomCode = Math.floor(Math.random() * (max - min + 1)) + min;
+
+    const emailData = {
+      email,
+      name,
+      password,
+      phone,
+      type,
+      randomCode,
+    };
+
+    // const emailResult = await sendMail(emailData);
+
+    // if (!emailResult.messageId) {
+    //   res.status(500).send("Failed to send email");
+    // }
+
+    const [businessData] = await db.query(
+      "SELECT business_id FROM employees ORDER BY business_id DESC"
+    );
+
+    const business_id = businessData[0].business_id + 1; /// Last business data + 1
+
+    const data = await db.query(
+      `INSERT INTO employees (business_id, name, email, password, emailPin, phone, type) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [business_id, name, email, password, randomCode, phone, type]
+    );
+
+    if (!data) {
+      return res.status(404).send({
+        success: false,
+        message: "Error in INSERT QUERY",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Admin created successfully",
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in Create Admin API",
+      error: error.message,
+    });
+  }
+};
