@@ -43,13 +43,14 @@ exports.getLossAndProfit = async (req, res) => {
     let onlineSalesAmount = 0;
     let totalSoOvAmount = 0;
     salesWithOnlineSales.forEach((entry) => {
-      const totalIncome = entry.totalCashCollect + entry.craditeSales;
+      const totalIncome =
+        parseFloat(entry.totalCashCollect) + parseFloat(entry.craditeSales);
       totalSales += totalIncome;
       onlineSalesAmount += entry?.onlineSales?.reduce(
-        (total, sale) => total + sale?.amount,
+        (total, sale) => total + parseFloat(sale?.amount),
         0
       );
-      totalSoOvAmount += entry.so_ov;
+      totalSoOvAmount += parseFloat(entry.so_ov);
     });
 
     const [salaries] = await db.query(
@@ -59,7 +60,7 @@ exports.getLossAndProfit = async (req, res) => {
 
     let totalSalariesAmount = 0;
     salaries.forEach((entry) => {
-      totalSalariesAmount += entry.amount;
+      totalSalariesAmount += parseFloat(entry.amount);
     });
 
     const [costings] = await db.query(
@@ -69,7 +70,7 @@ exports.getLossAndProfit = async (req, res) => {
 
     let totalCostingsAmount = 0;
     costings.forEach((entry) => {
-      totalCostingsAmount += entry.amount;
+      totalCostingsAmount += parseFloat(entry.amount);
     });
 
     // start food cost
@@ -88,7 +89,7 @@ exports.getLossAndProfit = async (req, res) => {
     let totalFoodCostAmount = 0;
     foodCostWithVendors.forEach((entry) => {
       const totalFoodCosts = entry?.data?.reduce(
-        (total, cost) => total + cost?.vendor_amount,
+        (total, cost) => total + parseFloat(cost?.vendor_amount),
         0
       );
 

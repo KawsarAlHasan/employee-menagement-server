@@ -46,9 +46,12 @@ exports.getAllSales = async (req, res) => {
     let totalSalesAmount = 0;
     salesWithOnlineSales.forEach((entry) => {
       const totalSales =
-        entry.totalCashCollect +
-        entry.craditeSales +
-        entry?.onlineSales?.reduce((total, sale) => total + sale?.amount, 0);
+        parseFloat(entry.totalCashCollect) +
+        parseFloat(entry.craditeSales) +
+        entry?.onlineSales?.reduce(
+          (total, sale) => total + parseFloat(sale?.amount),
+          0
+        );
 
       totalSalesAmount += totalSales;
     });

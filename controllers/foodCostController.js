@@ -89,7 +89,7 @@ exports.getAllFoodCost = async (req, res) => {
     let totalFoodCostAmount = 0;
     foodCostWithVendors.forEach((entry) => {
       const totalFoodCosting = entry?.data?.reduce(
-        (total, cost) => total + cost?.vendor_amount,
+        (total, cost) => total + parseFloat(cost?.vendor_amount),
         0
       );
 

@@ -46,7 +46,7 @@ exports.getAllSalaries = async (req, res) => {
 
     let totalSalariesAmount = 0;
     rows[0].forEach((entry) => {
-      totalSalariesAmount += entry.amount;
+      totalSalariesAmount += parseFloat(entry.amount);
     });
 
     res.status(200).send({
