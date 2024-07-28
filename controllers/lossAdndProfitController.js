@@ -39,6 +39,7 @@ exports.getLossAndProfit = async (req, res) => {
       })
     );
 
+    let totalTax = 0;
     let totalSales = 0;
     let onlineSalesAmount = 0;
     let totalSoOvAmount = 0;
@@ -50,6 +51,7 @@ exports.getLossAndProfit = async (req, res) => {
         (total, sale) => total + parseFloat(sale?.amount),
         0
       );
+      totalTax += entry.tax;
       totalSoOvAmount += parseFloat(entry.so_ov);
     });
 
@@ -149,6 +151,7 @@ exports.getLossAndProfit = async (req, res) => {
       success: true,
       totalSales,
       toatlOnlineSales: onlineSalesAmount,
+      totalTax,
       totalSalary: totalSalariesAmount,
       foodCost: totalFoodCostAmount,
       othersCost: totalCostingsAmount,
