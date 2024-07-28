@@ -102,7 +102,8 @@ exports.getSingleSalaryByID = async (req, res) => {
 // create salaries
 exports.createSalary = async (req, res) => {
   try {
-    const { employeeID, amount, payBy, date } = req.body;
+    const { employeeID, amount, payBy, check_no, date } = req.body;
+
     if (!employeeID || !amount || !payBy || !date) {
       return res.status(500).send({
         success: false,
@@ -113,8 +114,8 @@ exports.createSalary = async (req, res) => {
     const busn_id = req.businessId;
 
     const data = await db.query(
-      `INSERT INTO salaries (employeeID, amount, payBy, date, busn_id) VALUES (?, ?, ?, ?, ?)`,
-      [employeeID, amount, payBy, date, busn_id]
+      `INSERT INTO salaries (employeeID, amount, payBy, check_no, date, busn_id) VALUES (?, ?, ?, ?, ?, ?)`,
+      [employeeID, amount, payBy, check_no, date, busn_id]
     );
 
     if (!data) {
@@ -147,7 +148,7 @@ exports.updateSalary = async (req, res) => {
         message: "Invalid or missing Employee ID",
       });
     }
-    const { amount, payBy, date } = req.body;
+    const { amount, payBy, check_no, date } = req.body;
 
     if (!amount || !payBy || !date) {
       return res.status(404).send({
@@ -157,8 +158,8 @@ exports.updateSalary = async (req, res) => {
     }
 
     const data = await db.query(
-      `UPDATE salaries SET amount=?, payBy=?, date=? WHERE id =? `,
-      [amount, payBy, date, salaryID]
+      `UPDATE salaries SET amount=?, payBy=?, check_no=?, date=? WHERE id =? `,
+      [amount, payBy, check_no, date, salaryID]
     );
     if (!data) {
       return res.status(500).send({
