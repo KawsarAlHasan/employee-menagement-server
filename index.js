@@ -27,6 +27,7 @@ app.use("/api/v1/costing", require("./routes/costingRoute"));
 app.use("/api/v1/cost-list", require("./routes/costlistRoute"));
 app.use("/api/v1/food-cost", require("./routes/foodCostRoute"));
 app.use("/api/v1/profit", require("./routes/lossAndProfitRoute"));
+app.use("/api/v1/general-setting", require("./routes/generalSettingRoute"));
 
 const port = process.env.PORT || 5000;
 
@@ -47,9 +48,3 @@ mySqlPool
 app.get("/", (req, res) => {
   res.status(200).send("Employee Management Server is working");
 });
-
-// departments
-// roles
-// salaries
-// employee_departments
-// employee_roles
