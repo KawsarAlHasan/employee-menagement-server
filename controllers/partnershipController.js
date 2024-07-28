@@ -69,14 +69,15 @@ exports.addPartner = async (req, res) => {
     const busn_id = req.businessId;
     // Chack percentage
     const [rows] = await db.query(
-      "SELECT SUM(percentage) as totalPercentage FROM partnership WHERE busn_id=?",
+      "SELECT SUM(percentage) as totalPercentage FROM partnership WHERE busn_id = ?",
       [busn_id]
     );
     const totalPercentage = rows[0].totalPercentage || 0;
 
-    const [data] = await db.query("SELECT * FROM employees WHERE busn_id =?", [
-      busn_id,
-    ]);
+    const [data] = await db.query(
+      "SELECT * FROM employees WHERE business_id =?",
+      [busn_id]
+    );
     const [filteredAdmin] = data.filter(
       (employee) => employee.type.toLowerCase() == "admin"
     );
@@ -111,7 +112,10 @@ exports.addPartner = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 

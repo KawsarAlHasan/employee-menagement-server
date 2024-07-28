@@ -25,7 +25,7 @@ router.put("/update/:id", varifyEmployee, updateEmployee);
 router.put("/update-password/:id", varifyEmployee, updateEmployeePassword);
 router.delete("/delete/:id", varifyEmployee, deleteEmployee);
 
-router.post("/new-admin/create", varifyEmployee, createAdmins);
+router.post("/new-admin/create", createAdmins);
 router.put("/new-admin/update/:id", varifyEmployee, updateAdmins);
 router.put(
   "/new-admin/update-password/:id",
