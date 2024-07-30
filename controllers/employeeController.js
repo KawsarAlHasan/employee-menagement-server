@@ -118,6 +118,7 @@ exports.createEmployee = async (req, res) => {
     }
 
     const business_id = req.businessId;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const data = await db.query(
       `INSERT INTO employees (business_id, name, email, password, emailPin, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -125,7 +126,7 @@ exports.createEmployee = async (req, res) => {
         business_id,
         name,
         email,
-        password,
+        hashedPassword,
         randomCode,
         phone,
         type,
@@ -177,9 +178,7 @@ exports.employeeLogin = async (req, res) => {
     }
     const empLoyee = results[0];
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const isMatch = await bcrypt.compare(empLoyee?.password, hashedPassword);
+    const isMatch = await bcrypt.compare(password, empLoyee?.password);
 
     if (!isMatch) {
       return res.status(403).json({
@@ -281,9 +280,7 @@ exports.updateEmployeePassword = async (req, res) => {
 
     const checkPassword = data[0]?.password;
 
-    const hashedPassword = await bcrypt.hash(old_password, 10);
-
-    const isMatch = await bcrypt.compare(checkPassword, hashedPassword);
+    const isMatch = await bcrypt.compare(old_password, checkPassword);
 
     if (!isMatch) {
       return res.status(403).json({
@@ -292,9 +289,11 @@ exports.updateEmployeePassword = async (req, res) => {
       });
     }
 
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
     const [result] = await db.query(
       `UPDATE employees SET password=? WHERE id =?`,
-      [new_password, employeeID]
+      [hashedPassword, employeeID]
     );
 
     if (!result) {
@@ -476,9 +475,7 @@ exports.updateAdminPassword = async (req, res) => {
 
     const checkPassword = data[0]?.password;
 
-    const hashedPassword = await bcrypt.hash(old_password, 10);
-
-    const isMatch = await bcrypt.compare(checkPassword, hashedPassword);
+    const isMatch = await bcrypt.compare(old_password, checkPassword);
 
     if (!isMatch) {
       return res.status(403).json({
@@ -487,9 +484,11 @@ exports.updateAdminPassword = async (req, res) => {
       });
     }
 
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
     const [result] = await db.query(
       `UPDATE employees SET password=? WHERE id =? AND business_id=?`,
-      [new_password, employeeID, busn_id]
+      [hashedPassword, employeeID, busn_id]
     );
 
     if (!result) {
