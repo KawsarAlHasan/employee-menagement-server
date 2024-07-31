@@ -207,6 +207,43 @@ exports.employeeLogin = async (req, res) => {
   }
 };
 
+// pin check success
+exports.employeeCheck = async (req, res) => {
+  try {
+    const { reqEmailPin } = req.body;
+    if (!reqEmailPin) {
+      return res.status(401).json({
+        success: false,
+        error: "Please provide your pin",
+      });
+    }
+    const decodedEmployee = req?.decodedemployee?.email;
+    const [results] = await db.query(`SELECT * FROM employees WHERE email=?`, [
+      decodedEmployee,
+    ]);
+
+    const empLoyee = results[0].emailPin;
+
+    if (empLoyee !== reqEmailPin) {
+      return res.status(401).json({
+        success: false,
+        error: "Your Pic is not correct",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Pin Check Success",
+    });
+  } catch (error) {
+    res.status(400).send({
+      success: false,
+      message: "Pin Check unsuccess",
+      error: error.message,
+    });
+  }
+};
+
 // get me employee
 exports.getMeEmployee = async (req, res) => {
   try {

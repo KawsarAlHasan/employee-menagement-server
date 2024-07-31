@@ -19,10 +19,9 @@ module.exports = async (req, res, next) => {
       }
 
       const decodedEmployee = decoded.email;
-      const [result] = await db.query(
-        `SELECT business_id FROM employees WHERE email=?`,
-        [decodedEmployee]
-      );
+      const [result] = await db.query(`SELECT * FROM employees WHERE email=?`, [
+        decodedEmployee,
+      ]);
 
       const busn_id = result[0]?.business_id;
 
@@ -31,7 +30,7 @@ module.exports = async (req, res, next) => {
       }
 
       req.businessId = busn_id;
-      req.decodedemployee = decoded;
+      req.decodedemployee = result[0];
       next();
     });
   } catch (error) {

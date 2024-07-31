@@ -4,46 +4,45 @@ const moment = require("moment");
 // get all work time
 exports.getAllWorkTime = async (req, res) => {
   try {
-    const { employeeID, paymentDate } = req.query;
-
-    let params = [];
-    let query = "SELECT * FROM work_hours WHERE 1=1";
-
-    if (employeeID) {
-      query += " AND employeeID = ?";
-      params.push(employeeID);
-    }
-
-    if (paymentDate) {
-      query += " AND date = ?";
-      params.push(paymentDate);
-    }
-    query += " ORDER BY id DESC";
-
+    const { employeeID, month, year, day } = req.query;
     const busn_id = req.businessId;
-    query += " AND busn_id = ?";
-    params.push(busn_id);
 
-    const data = await db.query(query, params);
+    if (!month || !year) {
+      return res.status(400).send({
+        success: false,
+        message: "Month and year are required",
+      });
+    }
 
-    if (!data[0] || data[0].length == 0) {
-      return res.status(404).send({
+    const startDate = new Date(year, month - 1, 1);
+
+    const endDate = day
+      ? new Date(year, month - 1, day, 23, 59, 59)
+      : new Date(year, month, 0, 23, 59, 59);
+
+    const [data] = await db.query(
+      "SELECT * FROM work_hours WHERE date >= ? AND date <= ? AND busn_id=? AND employeeID = ? ORDER BY id DESC",
+      [startDate, endDate, busn_id, employeeID]
+    );
+
+    if (data.length === 0) {
+      return res.status(404).json({
         success: false,
         message: "No work hours found",
       });
     }
 
-    res.status(200).send({
+    res.status(200).json({
       success: true,
       message: "All work hours",
-      totalWorkTime: data[0].length,
-      data: data[0],
+      totalWorkTime: data.length,
+      data: data,
     });
   } catch (error) {
-    res.status(500).send({
+    res.status(500).json({
       success: false,
-      message: "Error in Get All work hours",
-      error,
+      message: "An error occurred while fetching work hours",
+      error: error.message,
     });
   }
 };
@@ -81,12 +80,12 @@ exports.getSingleWorkTimeByID = async (req, res) => {
 // start work hours
 exports.startWorkTime = async (req, res) => {
   try {
-    const { employeeID } = req.body;
+    const { id, business_id } = req.decodedemployee;
     const startTime = new Date();
 
     const [checkData] = await db.query(
       `SELECT * FROM work_hours WHERE employeeID=? AND end_time IS NULL`,
-      [employeeID]
+      [id]
     );
 
     if (checkData.length > 0) {
@@ -96,9 +95,11 @@ exports.startWorkTime = async (req, res) => {
       });
     }
 
+    const today = new Date().toISOString().slice(0, 10);
+
     const data = await db.query(
-      `INSERT INTO work_hours (employeeID, start_time) VALUES (?,  ?)`,
-      [employeeID, startTime]
+      `INSERT INTO work_hours (employeeID, start_time, date, busn_id) VALUES (?, ?, ?, ?)`,
+      [id, startTime, today, business_id]
     );
 
     if (!data) {
@@ -116,7 +117,7 @@ exports.startWorkTime = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in Start Work",
-      error,
+      error: error.message,
     });
   }
 };
@@ -124,26 +125,21 @@ exports.startWorkTime = async (req, res) => {
 // work end
 exports.endWorkTime = async (req, res) => {
   try {
-    const { employeeID } = req.body;
-    if (!employeeID) {
-      return res.status(404).send({
-        success: false,
-        message: "Invalid or missing work Time ID",
-      });
-    }
-
-    const [employeeData] = await db.query(
-      `SELECT salaryType, salaryRate FROM employees WHERE id=?`,
-      [employeeID]
-    );
-    const hourRate = employeeData[0].salaryRate;
+    const { id, salaryRate } = req.decodedemployee;
 
     const endTime = new Date();
 
     const [sTime] = await db.query(
       `SELECT start_time FROM work_hours WHERE employeeID=? AND end_time IS NULL`,
-      [employeeID]
+      [id]
     );
+
+    if (sTime.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "You are not working Start yet",
+      });
+    }
 
     const startTime = sTime[0].start_time;
     const totalWorkTime = endTime - startTime;
@@ -151,9 +147,9 @@ exports.endWorkTime = async (req, res) => {
     const totalMinutes = Math.floor(totalWorkTime / (1000 * 60));
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-
     const totalHoursDecimal = totalMinutes / 60;
-    const totalEarnings = totalHoursDecimal * hourRate;
+
+    const totalEarnings = totalHoursDecimal * salaryRate;
 
     const totalWorkTimeInHours = `${hours}:${
       minutes < 10 ? "0" : ""
@@ -161,7 +157,7 @@ exports.endWorkTime = async (req, res) => {
 
     const data = await db.query(
       `UPDATE work_hours SET end_time=?, total_hours=?, salaryRate=?, amount=? WHERE employeeID=? AND end_time IS NULL`,
-      [endTime, totalWorkTimeInHours, hourRate, totalEarnings, employeeID]
+      [endTime, totalWorkTimeInHours, salaryRate, totalEarnings, id]
     );
     if (!data) {
       return res.status(500).send({

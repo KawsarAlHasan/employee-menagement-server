@@ -11,6 +11,7 @@ const {
   updateAdmins,
   updateAdminPassword,
   updateEmployeePassword,
+  employeeCheck,
 } = require("../controllers/employeeController");
 const varifyEmployee = require("../middleware/varifyEmployee");
 
@@ -21,6 +22,7 @@ router.get("/me", varifyEmployee, getMeEmployee);
 router.get("/:id", varifyEmployee, getSingleEmployee);
 router.patch("/create", varifyEmployee, createEmployee);
 router.post("/login", employeeLogin);
+router.post("/check", employeeCheck);
 router.put("/update/:id", varifyEmployee, updateEmployee);
 router.put("/update-password/:id", varifyEmployee, updateEmployeePassword);
 router.delete("/delete/:id", varifyEmployee, deleteEmployee);
