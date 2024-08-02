@@ -1,5 +1,6 @@
 const db = require("../confiq/db");
-const moment = require("moment");
+const moment = require("moment-timezone");
+const geoip = require("geoip-lite");
 
 // get all work time
 exports.getAllWorkTime = async (req, res) => {
@@ -134,11 +135,12 @@ exports.startWorkTime = async (req, res) => {
       });
     }
 
-    const today = new Date().toISOString().slice(0, 10);
+    const dateInTokyo = moment.tz(startTime, "Asia/Tokyo").format();
+    const today = moment.tz(startTime, "Asia/Tokyo").format().slice(0, 10);
 
     const data = await db.query(
       `INSERT INTO work_hours (employeeID, start_time, date, busn_id) VALUES (?, ?, ?, ?)`,
-      [id, startTime, today, business_id]
+      [id, dateInTokyo, today, business_id]
     );
 
     if (!data) {
@@ -166,7 +168,29 @@ exports.endWorkTime = async (req, res) => {
   try {
     const { id, salaryRate } = req.decodedemployee;
 
-    const endTime = new Date();
+    const newDate = new Date();
+
+    // const dateInTokyo = moment.tz(newDate, "Asia/Tokyo");
+
+    const dateInTokyo = moment.tz(newDate, "Asia/Tokyo");
+
+    // Extract components
+    const year = dateInTokyo.year();
+    const month = dateInTokyo.month(); // Note: month is 0-based in JavaScript Date
+    const day = dateInTokyo.date();
+    const hour = dateInTokyo.hour();
+    const minute = dateInTokyo.minute();
+    const second = dateInTokyo.second();
+    const millisecond = dateInTokyo.millisecond();
+    const endTime = new Date(
+      year,
+      month,
+      day,
+      hour,
+      minute,
+      second,
+      millisecond
+    );
 
     const [sTime] = await db.query(
       `SELECT start_time FROM work_hours WHERE employeeID=? AND end_time IS NULL`,

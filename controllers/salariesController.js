@@ -229,7 +229,7 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
     }
 
     const [amountData] = await db.query(
-      "SELECT total_hours, amount FROM work_hours WHERE employeeID = ?",
+      "SELECT * FROM work_hours WHERE employeeID = ?",
       [employeeId]
     );
 
@@ -243,14 +243,14 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
     let totalAmount = 0;
     let allHours = moment.duration(0);
     amountData.forEach((row) => {
-      totalAmount += row.amount;
+      totalAmount += parseFloat(row.amount);
       let hours = row.total_hours;
       if (hours) {
         let parts = hours.split(":");
         if (parts.length === 2) {
           allHours.add({
-            hours: parseInt(parts[0]),
-            minutes: parseInt(parts[1]),
+            hours: parseFloat(parts[0]),
+            minutes: parseFloat(parts[1]),
           });
         } else if (!isNaN(parseFloat(hours))) {
           allHours.add({ hours: parseFloat(hours) });
@@ -263,7 +263,10 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
       ":" +
       moment.utc(allHours.asMilliseconds()).format("mm");
 
-    const totalPayment = data.reduce((acc, item) => acc + item.amount, 0);
+    const totalPayment = data.reduce(
+      (acc, item) => acc + parseFloat(item.amount),
+      0
+    );
     const dueAmount = totalAmount - totalPayment;
 
     res.status(200).send({
@@ -273,6 +276,7 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
       totalAmount,
       totalPayment,
       dueAmount,
+      amountData,
     });
   } catch (error) {
     res.status(500).send({
