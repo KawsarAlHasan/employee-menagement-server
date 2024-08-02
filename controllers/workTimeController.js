@@ -49,13 +49,19 @@ exports.getAllWorkTime = async (req, res) => {
 
 exports.getTodayWorkTime = async (req, res) => {
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).send({
+        success: false,
+        message: "date are required",
+      });
+    }
 
     const { id } = req.decodedemployee;
-
     const [data] = await db.query(
       `SELECT * FROM work_hours WHERE employeeID=? AND date=?`,
-      [id, today]
+      [id, date]
     );
 
     if (data.length === 0) {
