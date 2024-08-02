@@ -26,8 +26,8 @@ exports.getAllWorkTime = async (req, res) => {
     );
 
     if (data.length === 0) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
         message: "No work hours found",
       });
     }
@@ -42,6 +42,39 @@ exports.getAllWorkTime = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "An error occurred while fetching work hours",
+      error: error.message,
+    });
+  }
+};
+
+exports.getTodayWorkTime = async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+
+    const { id } = req.decodedemployee;
+
+    const [data] = await db.query(
+      `SELECT * FROM work_hours WHERE employeeID=? AND date=?`,
+      [id, today]
+    );
+
+    if (data.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No work hours found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Today total work hours",
+      todayTotalClockIn: data.length,
+      data: data,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching work Time",
       error: error.message,
     });
   }
