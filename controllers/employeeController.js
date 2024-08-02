@@ -222,18 +222,17 @@ exports.employeeCheck = async (req, res) => {
       decodedEmployee,
     ]);
 
-    const empLoyee = results[0].emailPin;
+    const empLoyee = results[0]?.emailPin;
 
-    if (empLoyee !== reqEmailPin) {
-      return res.status(401).json({
-        success: false,
-        error: "Your Pic is not correct",
+    if (empLoyee == reqEmailPin) {
+      res.status(200).json({
+        success: true,
+        message: "Pin Check Success",
       });
     }
-
-    res.status(200).json({
-      success: true,
-      message: "Pin Check Success",
+    return res.status(401).json({
+      success: false,
+      error: "Your Pic is not correct",
     });
   } catch (error) {
     res.status(400).send({
