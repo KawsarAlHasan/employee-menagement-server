@@ -119,7 +119,7 @@ exports.getSingleWorkTimeByID = async (req, res) => {
 // start work hours
 exports.startWorkTime = async (req, res) => {
   try {
-    const { id, business_id } = req.decodedemployee;
+    const { id, business_id, name, type } = req.decodedemployee;
     const startTime = new Date();
 
     const [checkData] = await db.query(
@@ -149,6 +149,26 @@ exports.startWorkTime = async (req, res) => {
       });
     }
 
+    // Fetch Admin Users
+    const [admins] = await db.query(
+      "SELECT id FROM employees WHERE business_id = ? AND type = 'admin'",
+      [business_id]
+    );
+
+    // Notification Details
+    const title = `Clock In: ${name} (${type})`;
+    const message = `${name} clocked in at ${startTime}.`;
+
+    const isRead = false;
+
+    // Insert Notification for Each Admin
+    admins.forEach(async (admin) => {
+      await db.query(
+        "INSERT INTO notifications (sander_id, receiver_id, title, message, is_read) VALUES (?, ?, ?, ?, ?)",
+        [id, admin.id, title, message, isRead]
+      );
+    });
+
     res.status(200).send({
       success: true,
       message: "Start Work Successfull",
@@ -165,7 +185,7 @@ exports.startWorkTime = async (req, res) => {
 // work end
 exports.endWorkTime = async (req, res) => {
   try {
-    const { id, salaryRate } = req.decodedemployee;
+    const { id, business_id, salaryRate, name, type } = req.decodedemployee;
 
     const newDate = new Date();
 
@@ -227,6 +247,25 @@ exports.endWorkTime = async (req, res) => {
         message: "Error in Work End Time ",
       });
     }
+
+    // Fetch Admin Users
+    const [admins] = await db.query(
+      "SELECT id FROM employees WHERE business_id = ? AND type = 'admin'",
+      [business_id]
+    );
+
+    // Notification Details
+    const title = `Clock Out: ${name} (${type})`;
+    const message = `${name} clocked out at ${endTime}. Total working hours: ${totalWorkTimeInHours}. Total earnings: ${totalEarnings}.`;
+    const isRead = false;
+
+    // Insert Notification for Each Admin
+    admins.forEach(async (admin) => {
+      await db.query(
+        "INSERT INTO notifications (sander_id, receiver_id, title, message, is_read) VALUES (?, ?, ?, ?, ?)",
+        [id, admin.id, title, message, isRead]
+      );
+    });
 
     res.status(200).send({
       success: true,

@@ -28,6 +28,7 @@ app.use("/api/v1/cost-list", require("./routes/costlistRoute"));
 app.use("/api/v1/food-cost", require("./routes/foodCostRoute"));
 app.use("/api/v1/profit", require("./routes/lossAndProfitRoute"));
 app.use("/api/v1/general-setting", require("./routes/generalSettingRoute"));
+app.use("/api/v1/notification", require("./routes/notificationsRoute"));
 // 404 Not Found middleware
 app.use((req, res, next) => {
   res.status(404).json({
