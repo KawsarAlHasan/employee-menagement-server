@@ -207,42 +207,53 @@ exports.deleteSalary = async (req, res) => {
 
 // My Earnings Hours and Payment
 exports.totalMyEarningsHoursAndPayment = async (req, res) => {
+  const employeeId = req.params.id;
+  if (!employeeId) {
+    return res.status(400).send({
+      success: false,
+      message: "Employee ID is required",
+    });
+  }
+  const { month, year, day } = req.query;
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = day
+    ? new Date(year, month - 1, day, 23, 59, 59)
+    : new Date(year, month, 0, 23, 59, 59);
+
   try {
-    const employeeId = req.params.id;
-    if (!employeeId) {
-      return res.status(400).send({
-        success: false,
-        message: "Employee ID is required",
-      });
+    let query = `SELECT salaries.*, employees.name AS employeeName FROM salaries JOIN employees ON salaries.employeeID = employees.id WHERE employeeID =?`;
+    let params = [employeeId];
+
+    if (month && year) {
+      query += " AND date >= ? AND date <= ?";
+      params.push(startDate);
+      params.push(endDate);
     }
 
-    const [data] = await db.query(
-      "SELECT amount FROM salaries WHERE employeeID = ?",
-      [employeeId]
-    );
+    const [data] = await db.query(query, params);
 
-    if (!data) {
-      return res.status(404).send({
-        success: false,
+    if (!data || data.length === 0) {
+      return res.status(200).send({
+        success: true,
         message: "No Earnings found",
+        data: data,
       });
     }
 
-    const [amountData] = await db.query(
-      "SELECT * FROM work_hours WHERE employeeID = ?",
-      [employeeId]
-    );
+    let queryWorkHour = "SELECT * FROM work_hours WHERE employeeID = ?";
+    let paramsWorkHour = [employeeId];
 
-    if (!amountData) {
-      return res.status(404).send({
-        success: false,
-        message: "No Earnings found",
-      });
+    if (month && year) {
+      queryWorkHour += " AND date >= ? AND date <= ?";
+      paramsWorkHour.push(startDate);
+      paramsWorkHour.push(endDate);
     }
+
+    const [workHoursData] = await db.query(queryWorkHour, paramsWorkHour);
 
     let totalAmount = 0;
     let allHours = moment.duration(0);
-    amountData.forEach((row) => {
+    workHoursData.forEach((row) => {
       totalAmount += parseFloat(row.amount);
       let hours = row.total_hours;
       if (hours) {
@@ -276,7 +287,7 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
       totalAmount,
       totalPayment,
       dueAmount,
-      amountData,
+      data,
     });
   } catch (error) {
     res.status(500).send({
