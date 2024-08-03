@@ -1,6 +1,5 @@
 const db = require("../confiq/db");
 const moment = require("moment-timezone");
-const geoip = require("geoip-lite");
 
 // get all work time
 exports.getAllWorkTime = async (req, res) => {
