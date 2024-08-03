@@ -221,7 +221,7 @@ exports.totalMyEarningsHoursAndPayment = async (req, res) => {
     : new Date(year, month, 0, 23, 59, 59);
 
   try {
-    let query = `SELECT salaries.*, employees.name AS employeeName FROM salaries JOIN employees ON salaries.employeeID = employees.id WHERE employeeID =?`;
+    let query = `SELECT salaries.*, salaryRate, employees.name AS employeeName FROM salaries JOIN employees ON salaries.employeeID = employees.id WHERE employeeID =?`;
     let params = [employeeId];
 
     if (month && year) {
