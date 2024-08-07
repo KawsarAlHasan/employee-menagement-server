@@ -30,7 +30,7 @@ app.use("/api/v1/profit", require("./routes/lossAndProfitRoute"));
 app.use("/api/v1/general-setting", require("./routes/generalSettingRoute"));
 app.use("/api/v1/notification", require("./routes/notificationsRoute"));
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8080;
 
 mySqlPool
   .query("SELECT 1")
@@ -39,7 +39,7 @@ mySqlPool
 
     // listen
     app.listen(port, () => {
-      console.log(`Employee Management Server is running on port ${port}`);
+      console.log(`BMS Server is running on port ${port}`);
     });
   })
   .catch((error) => {
@@ -47,7 +47,7 @@ mySqlPool
   });
 
 app.get("/", (req, res) => {
-  res.status(200).send("Employee Management Server is working");
+  res.status(200).send("BMS server is working");
 });
 
 // 404 Not Found middleware
