@@ -100,23 +100,6 @@ exports.createEmployee = async (req, res) => {
     const max = 9999;
     const randomCode = Math.floor(Math.random() * (max - min + 1)) + min;
 
-    const emailData = {
-      email,
-      name,
-      password,
-      phone,
-      type,
-      salaryType,
-      salaryRate,
-      randomCode,
-    };
-
-    const emailResult = await sendMail(emailData);
-
-    if (!emailResult.messageId) {
-      res.status(500).send("Failed to send email");
-    }
-
     const business_id = req.businessId;
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -140,6 +123,23 @@ exports.createEmployee = async (req, res) => {
         success: false,
         message: "Error in INSERT QUERY",
       });
+    }
+
+    const emailData = {
+      email,
+      name,
+      password,
+      phone,
+      type,
+      salaryType,
+      salaryRate,
+      randomCode,
+    };
+
+    const emailResult = await sendMail(emailData);
+
+    if (!emailResult.messageId) {
+      res.status(500).send("Failed to send email");
     }
 
     res.status(200).send({
@@ -423,7 +423,7 @@ exports.createAdmins = async (req, res) => {
     );
 
     const business_id = businessData[0].business_id + 1; /// Last business data + 1
-
+    const hashedPassword = await bcrypt.hash(password, 10);
     await db.query(
       `INSERT INTO employees (business_name, business_address, business_id, name, email, password, emailPin, phone, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -432,7 +432,7 @@ exports.createAdmins = async (req, res) => {
         business_id,
         name,
         email,
-        password,
+        hashedPassword,
         randomCode,
         phone,
         type,
