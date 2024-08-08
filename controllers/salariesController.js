@@ -111,14 +111,39 @@ exports.createSalary = async (req, res) => {
       });
     }
 
-    const busn_id = req.businessId;
+    const { id, business_id } = req.decodedemployee;
 
     const data = await db.query(
       `INSERT INTO salaries (employeeID, amount, payBy, check_no, date, busn_id) VALUES (?, ?, ?, ?, ?, ?)`,
-      [employeeID, amount, payBy, check_no, date, busn_id]
+      [employeeID, amount, payBy, check_no, date, business_id]
     );
 
     if (!data) {
+      return res.status(404).send({
+        success: false,
+        message: "Error in INSERT QUERY",
+      });
+    }
+
+    const [employeeInfo] = await db.query(
+      `SELECT * FROM employees WHERE id=? AND business_id=?`,
+      [employeeID, business_id]
+    );
+
+    const employeeName = employeeInfo[0].name;
+    const employeeType = employeeInfo[0].type;
+    // Notification Details
+    const title = `Salary Payment: ${employeeName} (${employeeType})`;
+    const message = `${employeeName} (${employeeType}) has been paid a salary of ${amount} BDT on ${date} by ${payBy}.`;
+    const isRead = false;
+
+    // Insert Notification for Each Admin
+    const [notification] = await db.query(
+      "INSERT INTO notifications (sander_id, receiver_id, title, message, is_read) VALUES (?, ?, ?, ?, ?)",
+      [id, employeeID, title, message, isRead]
+    );
+
+    if (!notification) {
       return res.status(404).send({
         success: false,
         message: "Error in INSERT QUERY",

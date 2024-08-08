@@ -6,7 +6,7 @@ exports.fetchUnreadNotifications = async (req, res) => {
     const { id } = req.decodedemployee;
 
     const query =
-      "SELECT * FROM notifications WHERE receiver_id = ? AND is_read = FALSE";
+      "SELECT * FROM notifications WHERE receiver_id = ? ORDER BY id DESC";
     const [data] = await db.query(query, [id]);
 
     if (!data || data.length == 0) {
@@ -57,26 +57,26 @@ exports.markNotificationAsRead = async (req, res) => {
 };
 
 // notification delete
-exports.deleteSalary = async (req, res) => {
+exports.deleteNotification = async (req, res) => {
   try {
-    const salaryId = req.params.id;
-    if (!salaryId) {
+    const notificationID = req.params.id;
+    if (!notificationID) {
       return res.status(404).send({
         success: false,
-        message: "Invalid or missing Salary ID",
+        message: "Notification id is required in params",
       });
     }
 
-    await db.query(`DELETE FROM salaries WHERE id=?`, [salaryId]);
+    await db.query(`DELETE FROM notifications WHERE id=?`, [notificationID]);
     res.status(200).send({
       success: true,
-      message: "Salary Deleted Successfully",
+      message: "Notification Deleted Successfully",
     });
   } catch (error) {
     res.status(500).send({
       success: false,
-      message: "Error in Delete Salary",
-      error,
+      message: "Error in Delete Notification",
+      error: error.message,
     });
   }
 };
