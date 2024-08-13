@@ -427,7 +427,7 @@ exports.updateEmployee = async (req, res) => {
 
     let proPic = empLoyeeProfilePic[0]?.profilePic;
     if (images && images.path) {
-      proPic = images.path;
+      proPic = `/public/images/${images.filename}`;
     }
 
     const { name, phone, type, salaryType, salaryRate, address, joiningDate } =
