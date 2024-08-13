@@ -1,6 +1,7 @@
 const db = require("../confiq/db");
 const { generateEmployeeToken } = require("../confiq/employeeToken");
 const bcrypt = require("bcrypt");
+const moment = require("moment");
 const { sendMail } = require("../middleware/sandEmail");
 
 // get all Employees
@@ -54,7 +55,7 @@ exports.getSingleEmployee = async (req, res) => {
 
     const business_id = req.businessId;
 
-    const data = await db.query(
+    const [data] = await db.query(
       `SELECT * FROM employees WHERE id=? AND business_id=?`,
       [employeeID, business_id]
     );
@@ -64,13 +65,69 @@ exports.getSingleEmployee = async (req, res) => {
         message: "No Employee found",
       });
     }
-    const employee = data[0];
-    res.status(200).send(employee[0]);
+
+    const [workHoursData] = await db.query(
+      "SELECT * FROM work_hours WHERE employeeID = ?",
+      [employeeID]
+    );
+
+    let totalAmount = 0;
+    let allHours = moment.duration(0);
+    workHoursData?.forEach((row) => {
+      totalAmount += parseFloat(row?.amount);
+      let hours = row.total_hours;
+      if (hours) {
+        let parts = hours.split(":");
+        if (parts.length === 2) {
+          allHours.add({
+            hours: parseFloat(parts[0]),
+            minutes: parseFloat(parts[1]),
+          });
+        } else if (!isNaN(parseFloat(hours))) {
+          allHours.add({ hours: parseFloat(hours) });
+        }
+      }
+    });
+
+    const totalWorkTime =
+      Math.floor(allHours.asHours()) +
+      ":" +
+      moment.utc(allHours.asMilliseconds()).format("mm");
+
+    const [salariesData] = await db.query(
+      "SELECT * FROM salaries WHERE employeeID = ?",
+      [employeeID]
+    );
+
+    const totalPayment = salariesData?.reduce(
+      (acc, item) => acc + parseFloat(item?.amount),
+      0
+    );
+
+    const [historyData] = await db.query(
+      `SELECT address, profilePic, joiningDate FROM employee_history WHERE employee_id=?`,
+      [employeeID]
+    );
+
+    const dueAmount = totalAmount - totalPayment;
+
+    const employee = {
+      ...data[0],
+      total_amount_earn: parseFloat(totalAmount.toFixed(3)) || "",
+      total_clock_in: totalWorkTime || "",
+      total_payment: parseFloat(totalPayment.toFixed(3)) || 0,
+      due_payment: parseFloat(dueAmount.toFixed(3)) || 0,
+      address: historyData[0]?.address || "",
+      profilePic: historyData[0]?.profilePic || "",
+      joiningDate: historyData[0]?.joiningDate || "",
+    };
+
+    res.status(200).send(employee);
   } catch (error) {
     res.status(500).send({
       success: false,
       message: "Error in getting Employee",
-      error,
+      error: error.message,
     });
   }
 };
@@ -78,8 +135,31 @@ exports.getSingleEmployee = async (req, res) => {
 // create employee
 exports.createEmployee = async (req, res) => {
   try {
-    const { name, email, password, phone, type, salaryType, salaryRate } =
-      req.body;
+    const {
+      name,
+      email,
+      password,
+      phone,
+      type,
+      salaryType,
+      salaryRate,
+      profilePic,
+      address,
+      joiningDate,
+    } = req.body;
+
+    let proPic = profilePic;
+    if (profilePic == undefined) {
+      proPic = "";
+    }
+    let employeeAdd = address;
+    if (address == undefined) {
+      employeeAdd = "";
+    }
+    let joinDate = joiningDate;
+    if (joiningDate == undefined) {
+      joinDate = "";
+    }
 
     if (
       !name ||
@@ -103,7 +183,7 @@ exports.createEmployee = async (req, res) => {
     const business_id = req.businessId;
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const data = await db.query(
+    const [data] = await db.query(
       `INSERT INTO employees (business_id, name, email, password, emailPin, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         business_id,
@@ -125,21 +205,32 @@ exports.createEmployee = async (req, res) => {
       });
     }
 
-    const emailData = {
-      email,
-      name,
-      password,
-      phone,
-      type,
-      salaryType,
-      salaryRate,
-      randomCode,
-    };
-
-    const emailResult = await sendMail(emailData);
-
-    if (!emailResult.messageId) {
-      res.status(500).send("Failed to send email");
+    if (data.insertId) {
+      const employeeID = data?.insertId;
+      const [employeeHistory] = await db.query(
+        `INSERT INTO employee_history (employee_id, profilePic, address, joiningDate) VALUES (?, ?, ?, ?)`,
+        [employeeID, proPic, employeeAdd, joinDate]
+      );
+      if (!employeeHistory) {
+        return res.status(404).send({
+          success: false,
+          message: "Error in INSERT QUERY",
+        });
+      }
+      const emailData = {
+        email,
+        name,
+        password,
+        phone,
+        type,
+        salaryType,
+        salaryRate,
+        randomCode,
+      };
+      const emailResult = await sendMail(emailData);
+      if (!emailResult.messageId) {
+        res.status(500).send("Failed to send email");
+      }
     }
 
     res.status(200).send({
@@ -247,12 +338,69 @@ exports.employeeCheck = async (req, res) => {
 exports.getMeEmployee = async (req, res) => {
   try {
     const decodedEmployee = req?.decodedemployee?.email;
-    const result = await db.query(`SELECT * FROM employees WHERE email=?`, [
+    const [result] = await db.query(`SELECT * FROM employees WHERE email=?`, [
       decodedEmployee,
     ]);
 
-    const employee = result[0];
-    res.status(200).json(employee[0]);
+    const employeeId = result[0].id;
+
+    const [workHoursData] = await db.query(
+      "SELECT * FROM work_hours WHERE employeeID = ?",
+      [employeeId]
+    );
+
+    let totalAmount = 0;
+    let allHours = moment.duration(0);
+    workHoursData?.forEach((row) => {
+      totalAmount += parseFloat(row?.amount);
+      let hours = row.total_hours;
+      if (hours) {
+        let parts = hours.split(":");
+        if (parts.length === 2) {
+          allHours.add({
+            hours: parseFloat(parts[0]),
+            minutes: parseFloat(parts[1]),
+          });
+        } else if (!isNaN(parseFloat(hours))) {
+          allHours.add({ hours: parseFloat(hours) });
+        }
+      }
+    });
+
+    const totalWorkTime =
+      Math.floor(allHours.asHours()) +
+      ":" +
+      moment.utc(allHours.asMilliseconds()).format("mm");
+
+    const [salariesData] = await db.query(
+      "SELECT * FROM salaries WHERE employeeID = ?",
+      [employeeId]
+    );
+
+    const totalPayment = salariesData?.reduce(
+      (acc, item) => acc + parseFloat(item?.amount),
+      0
+    );
+
+    const [historyData] = await db.query(
+      `SELECT address, profilePic, joiningDate FROM employee_history WHERE employee_id=?`,
+      [employeeId]
+    );
+
+    const dueAmount = totalAmount - totalPayment;
+
+    const employee = {
+      ...result[0],
+      total_amount_earn: parseFloat(totalAmount.toFixed(3)) || "",
+      total_clock_in: totalWorkTime || "",
+      total_payment: parseFloat(totalPayment.toFixed(3)) || 0,
+      due_payment: parseFloat(dueAmount.toFixed(3)) || 0,
+      address: historyData[0]?.address || "",
+      profilePic: historyData[0]?.profilePic || "",
+      joiningDate: historyData[0]?.joiningDate || "",
+    };
+
+    res.status(200).json(employee);
   } catch (error) {
     res.status(400).json({
       success: false,
@@ -271,12 +419,22 @@ exports.updateEmployee = async (req, res) => {
         message: "Employee ID is requied",
       });
     }
-    const { name, phone, type, salaryType, salaryRate } = req.body;
-    business_id;
-    const business_id = req.businessId;
+    const images = req.file;
+    const [empLoyeeProfilePic] = await db.query(
+      `SELECT profilePic FROM employee_history WHERE employee_id=?`,
+      [employeeID]
+    );
 
-    const data = await db.query(
-      `UPDATE employees SET name=?, phone=?, type=?, salaryType=?, salaryRate=? WHERE id =? AND business_id=?`,
+    let proPic = empLoyeeProfilePic[0]?.profilePic;
+    if (images && images.path) {
+      proPic = images.path;
+    }
+
+    const { name, phone, type, salaryType, salaryRate, address, joiningDate } =
+      req.body;
+
+    const [data] = await db.query(
+      `UPDATE employees SET name=?, phone=?, type=?, salaryType=?, salaryRate=? WHERE id =?`,
       [name, phone, type, salaryType, salaryRate, employeeID]
     );
     if (!data) {
@@ -285,6 +443,18 @@ exports.updateEmployee = async (req, res) => {
         message: "Error in update Employee ",
       });
     }
+    const [employeeHistory] = await db.query(
+      `UPDATE employee_history SET profilePic=?, address=?, joiningDate=? WHERE employee_id =?`,
+      [proPic, address, joiningDate, employeeID]
+    );
+
+    if (!employeeHistory) {
+      return res.status(500).send({
+        success: false,
+        message: "Error in update Employee ",
+      });
+    }
+
     res.status(200).send({
       success: true,
       message: "Employee updated successfully",
@@ -293,11 +463,12 @@ exports.updateEmployee = async (req, res) => {
     res.status(500).send({
       success: false,
       message: "Error in Update Employee ",
-      error,
+      error: error.message,
     });
   }
 };
 
+// update employee password
 exports.updateEmployeePassword = async (req, res) => {
   try {
     const employeeID = req.params.id;
@@ -452,6 +623,7 @@ exports.createAdmins = async (req, res) => {
   }
 };
 
+// update admin
 exports.updateAdmins = async (req, res) => {
   try {
     const employeeID = req.params.id;
@@ -491,6 +663,7 @@ exports.updateAdmins = async (req, res) => {
   }
 };
 
+// update admin password
 exports.updateAdminPassword = async (req, res) => {
   try {
     const employeeID = req.params.id;
