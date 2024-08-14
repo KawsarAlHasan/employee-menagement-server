@@ -143,14 +143,14 @@ exports.createEmployee = async (req, res) => {
       type,
       salaryType,
       salaryRate,
-      profilePic,
       address,
       joiningDate,
     } = req.body;
 
-    let proPic = profilePic;
-    if (profilePic == undefined) {
-      proPic = "";
+    const images = req.file;
+    let proPic = "";
+    if (images && images.path) {
+      proPic = `/public/images/${images.filename}`;
     }
     let employeeAdd = address;
     if (address == undefined) {

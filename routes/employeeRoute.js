@@ -21,7 +21,12 @@ const router = express.Router();
 router.get("/all", varifyEmployee, getAllEmployees);
 router.get("/me", varifyEmployee, getMeEmployee);
 router.get("/:id", varifyEmployee, getSingleEmployee);
-router.patch("/create", varifyEmployee, createEmployee);
+router.patch(
+  "/create",
+  uploadImage.single("profilePic"),
+  varifyEmployee,
+  createEmployee
+);
 router.post("/login", employeeLogin);
 router.post("/check", varifyEmployee, employeeCheck);
 router.put(
