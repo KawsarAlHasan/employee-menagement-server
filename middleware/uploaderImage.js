@@ -1,18 +1,8 @@
-const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = path.join(__dirname, "public/images");
-
-    // Check if the directory exists, if not create it
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    cb(null, dir);
-  },
+  destination: "public/images",
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const fileName = file.originalname.replace(/\s+/g, "-").toLowerCase();
