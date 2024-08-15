@@ -175,8 +175,8 @@ exports.getSingleEmployeeInfo = async (req, res) => {
     }
 
     const [workHoursData] = await db.query(
-      "SELECT * FROM work_hours WHERE employeeID = ? AND date >= ? AND date <= ?",
-      [employeeID, startDate, endDate]
+      "SELECT * FROM work_hours WHERE employeeID = ?",
+      [employeeID]
     );
 
     let totalAmount = 0;
@@ -203,8 +203,8 @@ exports.getSingleEmployeeInfo = async (req, res) => {
       moment.utc(allHours.asMilliseconds()).format("mm");
 
     const [salariesData] = await db.query(
-      "SELECT * FROM salaries WHERE employeeID = ? AND date >= ? AND date <= ?",
-      [employeeID, startDate, endDate]
+      "SELECT * FROM salaries WHERE employeeID = ?",
+      [employeeID]
     );
 
     const totalPayment = salariesData?.reduce(
@@ -230,11 +230,62 @@ exports.getSingleEmployeeInfo = async (req, res) => {
       joiningDate: historyData[0]?.joiningDate || "",
     };
 
+    // selected month data start
+    const [selectedMonthWorkHoursData] = await db.query(
+      "SELECT * FROM work_hours WHERE employeeID = ? AND date >= ? AND date <= ?",
+      [employeeID, startDate, endDate]
+    );
+
+    const [selectedMonthSalariesData] = await db.query(
+      "SELECT * FROM salaries WHERE employeeID = ? AND date >= ? AND date <= ?",
+      [employeeID, startDate, endDate]
+    );
+
+    let selectedMonthTotalAmount = 0;
+    let selectedMonthAllHours = moment.duration(0);
+    selectedMonthWorkHoursData?.forEach((row) => {
+      selectedMonthTotalAmount += parseFloat(row?.amount);
+      let hours = row.total_hours;
+      if (hours) {
+        let parts = hours.split(":");
+        if (parts.length === 2) {
+          selectedMonthAllHours.add({
+            hours: parseFloat(parts[0]),
+            minutes: parseFloat(parts[1]),
+          });
+        } else if (!isNaN(parseFloat(hours))) {
+          selectedMonthAllHours.add({ hours: parseFloat(hours) });
+        }
+      }
+    });
+
+    const selectedMonthTotalWorkTime =
+      Math.floor(selectedMonthAllHours.asHours()) +
+      ":" +
+      moment.utc(selectedMonthAllHours.asMilliseconds()).format("mm");
+
+    const selectedMonthTotalPayment = selectedMonthSalariesData?.reduce(
+      (acc, item) => acc + parseFloat(item?.amount),
+      0
+    );
+
+    const selectedMontDueAmount =
+      selectedMonthTotalAmount - selectedMonthTotalPayment;
+    // selected month data end
+
     res.status(200).send({
       success: true,
       employee: employee,
-      working_history: workHoursData,
-      payment_history: salariesData,
+
+      selectedMonthTotalAmount:
+        parseFloat(selectedMonthTotalAmount.toFixed(3)) || "",
+      selectedMonthTotalWorkTime: selectedMonthTotalWorkTime || "",
+      selectedMonthTotalPayment:
+        parseFloat(selectedMonthTotalPayment.toFixed(3)) || 0,
+      selectedMontDueAmount: parseFloat(selectedMontDueAmount.toFixed(3)) || 0,
+
+      working_history: selectedMonthWorkHoursData,
+      payment_history: selectedMonthSalariesData,
     });
   } catch (error) {
     res.status(500).send({
