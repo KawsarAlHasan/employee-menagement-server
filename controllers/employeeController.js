@@ -132,6 +132,119 @@ exports.getSingleEmployee = async (req, res) => {
   }
 };
 
+exports.getSingleEmployeeInfo = async (req, res) => {
+  const { month, year, day } = req.query;
+
+  const currentDate = new Date();
+  const monthNumber = currentDate.getMonth() + 1;
+  const yearNumber = currentDate.getFullYear();
+
+  let monthNum = month;
+  if (!month) {
+    monthNum = monthNumber;
+  }
+
+  let yearNum = year;
+  if (!year) {
+    yearNum = yearNumber;
+  }
+
+  const startDate = new Date(yearNum, monthNum - 1, 1);
+  const endDate = day
+    ? new Date(yearNum, monthNum - 1, day, 23, 59, 59)
+    : new Date(yearNum, monthNum, 0, 23, 59, 59);
+
+  try {
+    const employeeID = req.params.id;
+    if (!employeeID) {
+      return res.status(404).send({
+        success: false,
+        message: "Invalid or missing Employee ID",
+      });
+    }
+    const business_id = req.businessId;
+    const [data] = await db.query(
+      `SELECT * FROM employees WHERE id=? AND business_id=?`,
+      [employeeID, business_id]
+    );
+    if (!data || data.length === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "No Employee found",
+      });
+    }
+
+    const [workHoursData] = await db.query(
+      "SELECT * FROM work_hours WHERE employeeID = ? AND date >= ? AND date <= ?",
+      [employeeID, startDate, endDate]
+    );
+
+    let totalAmount = 0;
+    let allHours = moment.duration(0);
+    workHoursData?.forEach((row) => {
+      totalAmount += parseFloat(row?.amount);
+      let hours = row.total_hours;
+      if (hours) {
+        let parts = hours.split(":");
+        if (parts.length === 2) {
+          allHours.add({
+            hours: parseFloat(parts[0]),
+            minutes: parseFloat(parts[1]),
+          });
+        } else if (!isNaN(parseFloat(hours))) {
+          allHours.add({ hours: parseFloat(hours) });
+        }
+      }
+    });
+
+    const totalWorkTime =
+      Math.floor(allHours.asHours()) +
+      ":" +
+      moment.utc(allHours.asMilliseconds()).format("mm");
+
+    const [salariesData] = await db.query(
+      "SELECT * FROM salaries WHERE employeeID = ? AND date >= ? AND date <= ?",
+      [employeeID, startDate, endDate]
+    );
+
+    const totalPayment = salariesData?.reduce(
+      (acc, item) => acc + parseFloat(item?.amount),
+      0
+    );
+
+    const [historyData] = await db.query(
+      `SELECT address, profilePic, joiningDate FROM employee_history WHERE employee_id=?`,
+      [employeeID]
+    );
+
+    const dueAmount = totalAmount - totalPayment;
+
+    const employee = {
+      ...data[0],
+      total_amount_earn: parseFloat(totalAmount.toFixed(3)) || "",
+      total_clock_in: totalWorkTime || "",
+      total_payment: parseFloat(totalPayment.toFixed(3)) || 0,
+      due_payment: parseFloat(dueAmount.toFixed(3)) || 0,
+      address: historyData[0]?.address || "",
+      profilePic: historyData[0]?.profilePic || "",
+      joiningDate: historyData[0]?.joiningDate || "",
+    };
+
+    res.status(200).send({
+      success: true,
+      employee: employee,
+      working_history: workHoursData,
+      payment_history: salariesData,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in getting Employee",
+      error: error.message,
+    });
+  }
+};
+
 // create employee
 exports.createEmployee = async (req, res) => {
   try {

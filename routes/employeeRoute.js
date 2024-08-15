@@ -12,6 +12,7 @@ const {
   updateAdminPassword,
   updateEmployeePassword,
   employeeCheck,
+  getSingleEmployeeInfo,
 } = require("../controllers/employeeController");
 const varifyEmployee = require("../middleware/varifyEmployee");
 const uploadImage = require("../middleware/uploaderImage");
@@ -20,6 +21,7 @@ const router = express.Router();
 
 router.get("/all", varifyEmployee, getAllEmployees);
 router.get("/me", varifyEmployee, getMeEmployee);
+router.get("/info/:id", varifyEmployee, getSingleEmployeeInfo);
 router.get("/:id", varifyEmployee, getSingleEmployee);
 router.patch(
   "/create",
