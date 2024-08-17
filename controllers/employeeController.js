@@ -402,6 +402,12 @@ exports.createEmployee = async (req, res) => {
       message: "Employee created successfully",
     });
   } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
     res.status(500).send({
       success: false,
       message: "Error in Create Employee API",
@@ -736,23 +742,6 @@ exports.createAdmins = async (req, res) => {
     const max = 9999;
     const randomCode = Math.floor(Math.random() * (max - min + 1)) + min;
 
-    const emailData = {
-      business_name,
-      business_address,
-      email,
-      name,
-      password,
-      phone,
-      type,
-      randomCode,
-    };
-
-    const emailResult = await sendMail(emailData);
-
-    if (!emailResult.messageId) {
-      res.status(500).send("Failed to send email");
-    }
-
     const [businessData] = await db.query(
       "SELECT business_id FROM employees ORDER BY business_id DESC"
     );
@@ -774,11 +763,34 @@ exports.createAdmins = async (req, res) => {
       ]
     );
 
+    const emailData = {
+      business_name,
+      business_address,
+      email,
+      name,
+      password,
+      phone,
+      type,
+      randomCode,
+    };
+
+    const emailResult = await sendMail(emailData);
+
+    if (!emailResult.messageId) {
+      res.status(500).send("Failed to send email");
+    }
+
     res.status(200).send({
       success: true,
       message: "Admin created successfully",
     });
   } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
     res.status(500).send({
       success: false,
       message: "Error in Create Admin API",
