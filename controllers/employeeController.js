@@ -305,12 +305,22 @@ exports.createEmployee = async (req, res) => {
       password,
       phone,
       type,
+      employeeType,
+      employeePosition,
       salaryType,
       salaryRate,
       address,
       joiningDate,
     } = req.body;
 
+    let empType = employeePosition;
+    if (employeePosition == undefined) {
+      empType = "";
+    }
+    let empPosition = employeeType;
+    if (employeeType == undefined) {
+      empPosition = "";
+    }
     const images = req.file;
     let proPic = "";
     if (images && images.path) {
@@ -348,7 +358,7 @@ exports.createEmployee = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [data] = await db.query(
-      `INSERT INTO employees (business_id, name, email, password, emailPin, phone, type, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO employees (business_id, name, email, password, emailPin, phone, type, employeeType, employeePosition, salaryType, salaryRate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         business_id,
         name,
@@ -357,6 +367,8 @@ exports.createEmployee = async (req, res) => {
         randomCode,
         phone,
         type,
+        empType,
+        empPosition,
         salaryType,
         salaryRate,
       ]
@@ -387,6 +399,8 @@ exports.createEmployee = async (req, res) => {
         password,
         phone,
         type,
+        empType,
+        empPosition,
         salaryType,
         salaryRate,
         randomCode,
@@ -600,12 +614,30 @@ exports.updateEmployee = async (req, res) => {
       proPic = `/public/images/${images.filename}`;
     }
 
-    const { name, phone, type, salaryType, salaryRate, address, joiningDate } =
-      req.body;
+    const {
+      name,
+      phone,
+      type,
+      employeeType,
+      employeePosition,
+      salaryType,
+      salaryRate,
+      address,
+      joiningDate,
+    } = req.body;
 
     const [data] = await db.query(
-      `UPDATE employees SET name=?, phone=?, type=?, salaryType=?, salaryRate=? WHERE id =?`,
-      [name, phone, type, salaryType, salaryRate, employeeID]
+      `UPDATE employees SET name=?, phone=?, type=?, employeeType=?, employeePosition=?, salaryType=?, salaryRate=? WHERE id =?`,
+      [
+        name,
+        phone,
+        type,
+        employeeType,
+        employeePosition,
+        salaryType,
+        salaryRate,
+        employeeID,
+      ]
     );
     if (!data) {
       return res.status(500).send({
@@ -748,7 +780,7 @@ exports.createAdmins = async (req, res) => {
 
     const business_id = businessData[0].business_id + 1; /// Last business data + 1
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.query(
+    const [result] = await db.query(
       `INSERT INTO employees (business_name, business_address, business_id, name, email, password, emailPin, phone, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         business_name,
@@ -763,21 +795,23 @@ exports.createAdmins = async (req, res) => {
       ]
     );
 
-    const emailData = {
-      business_name,
-      business_address,
-      email,
-      name,
-      password,
-      phone,
-      type,
-      randomCode,
-    };
+    if (result.insertId) {
+      const emailData = {
+        business_name,
+        business_address,
+        email,
+        name,
+        password,
+        phone,
+        type,
+        randomCode,
+      };
 
-    const emailResult = await sendMail(emailData);
+      const emailResult = await sendMail(emailData);
 
-    if (!emailResult.messageId) {
-      res.status(500).send("Failed to send email");
+      if (!emailResult.messageId) {
+        res.status(500).send("Failed to send email");
+      }
     }
 
     res.status(200).send({
