@@ -119,7 +119,7 @@ exports.getSingleWorkTimeByID = async (req, res) => {
 // start work hours
 exports.startWorkTime = async (req, res) => {
   try {
-    const { id, business_id, name, type } = req.decodedemployee;
+    const { id, business_id, name, type, employeeType } = req.decodedemployee;
     const startTime = new Date();
 
     const [checkData] = await db.query(
@@ -156,7 +156,7 @@ exports.startWorkTime = async (req, res) => {
     );
 
     // Notification Details
-    const title = `Clock In: ${name} (${type})`;
+    const title = `Clock In: ${name} (${employeeType})`;
     const message = `${name} clocked in at ${startTime}.`;
 
     const isRead = false;
@@ -185,7 +185,8 @@ exports.startWorkTime = async (req, res) => {
 // work end
 exports.endWorkTime = async (req, res) => {
   try {
-    const { id, business_id, salaryRate, name, type } = req.decodedemployee;
+    const { id, business_id, salaryRate, name, type, employeeType } =
+      req.decodedemployee;
 
     const newDate = new Date();
 
@@ -255,7 +256,7 @@ exports.endWorkTime = async (req, res) => {
     );
 
     // Notification Details
-    const title = `Clock Out: ${name} (${type})`;
+    const title = `Clock Out: ${name} (${employeeType})`;
     const message = `${name} clocked out at ${endTime}. Total working hours: ${totalWorkTimeInHours}. Total earnings: ${totalEarnings}.`;
     const isRead = false;
 

@@ -13,6 +13,7 @@ const {
   updateEmployeePassword,
   employeeCheck,
   getSingleEmployeeInfo,
+  activeDeactivateEmployee,
 } = require("../controllers/employeeController");
 const varifyEmployee = require("../middleware/varifyEmployee");
 const uploadImage = require("../middleware/uploaderImage");
@@ -37,6 +38,7 @@ router.put(
   varifyEmployee,
   updateEmployee
 );
+router.put("/status/:id", varifyEmployee, activeDeactivateEmployee);
 router.put("/update-password/:id", varifyEmployee, updateEmployeePassword);
 router.delete("/delete/:id", varifyEmployee, deleteEmployee);
 

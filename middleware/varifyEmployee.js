@@ -18,8 +18,8 @@ module.exports = async (req, res, next) => {
         return res.status(403).send({ message: "Forbidden access" });
       }
 
-      const decodedEmployee = decoded.email;
-      const [result] = await db.query(`SELECT * FROM employees WHERE email=?`, [
+      const decodedEmployee = decoded.id;
+      const [result] = await db.query(`SELECT * FROM employees WHERE id=?`, [
         decodedEmployee,
       ]);
 

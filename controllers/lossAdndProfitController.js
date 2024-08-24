@@ -117,36 +117,6 @@ exports.getLossAndProfit = async (req, res) => {
       netIncome = difference;
     }
 
-    // if (difference >= 0) {
-    //   res.status(200).send({
-    //     success: true,
-    //     totalSales,
-    //     toatlOnlineSales: onlineSalesAmount,
-    //     totalSalary: totalSalariesAmount,
-    //     foodCost: totalCostingsAmount,
-    //     shortOver: totalSoOvAmount,
-    //     totalDabit,
-    //     totalCradit,
-    //     totalProfit: difference,
-    //     totalLoss: "00",
-    //     netIncome: difference,
-    //   });
-    // } else if (difference < 0) {
-    //   res.status(200).send({
-    //     success: true,
-    //     totalSales,
-    //     toatlOnlineSales: onlineSalesAmount,
-    //     totalSalary: totalSalariesAmount,
-    //     foodCost: totalCostingsAmount,
-    //     shortOver: totalSoOvAmount,
-    //     totalDabit,
-    //     totalCradit,
-    //     totalProfit: "00",
-    //     totalLoss: -difference,
-    //     netIncome: difference,
-    //   });
-    // }
-
     res.status(200).send({
       success: true,
       totalSales,

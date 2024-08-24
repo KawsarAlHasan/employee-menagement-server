@@ -24,7 +24,8 @@ exports.getAllEmployees = async (req, res) => {
 
     // Filter out admin employees
     const filteredEmployees = data.filter(
-      (employee) => employee.type.toLowerCase() !== "admin"
+      (employee) =>
+        employee.type.toLowerCase() !== "admin" && employee.type !== "Partner"
     );
 
     res.status(200).send({
@@ -313,12 +314,12 @@ exports.createEmployee = async (req, res) => {
       joiningDate,
     } = req.body;
 
-    let empType = employeePosition;
-    if (employeePosition == undefined) {
+    let empType = employeeType;
+    if (employeeType == undefined) {
       empType = "";
     }
-    let empPosition = employeeType;
-    if (employeeType == undefined) {
+    let empPosition = employeePosition;
+    if (employeePosition == undefined) {
       empPosition = "";
     }
     const images = req.file;
@@ -670,6 +671,61 @@ exports.updateEmployee = async (req, res) => {
   }
 };
 
+// active deactivate
+exports.activeDeactivateEmployee = async (req, res) => {
+  try {
+    const employeeID = req.params.id;
+    if (!employeeID) {
+      return res.status(404).send({
+        success: false,
+        message: "Employee ID is required",
+      });
+    }
+
+    // Fetch current status of the employee
+    const [employee] = await db.query(
+      `SELECT status FROM employees WHERE id = ?`,
+      [employeeID]
+    );
+
+    if (!employee.length) {
+      return res.status(404).send({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    const currentStatus = employee[0].status;
+
+    // Toggle the status
+    const newStatus = currentStatus === "active" ? "deactivate" : "active";
+
+    // Update the status in the database
+    const [data] = await db.query(`UPDATE employees SET status=? WHERE id=?`, [
+      newStatus,
+      employeeID,
+    ]);
+
+    if (data.affectedRows === 0) {
+      return res.status(500).send({
+        success: false,
+        message: "Error in status update",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: `Status updated to ${newStatus} successfully`,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in status update",
+      error: error.message,
+    });
+  }
+};
+
 // update employee password
 exports.updateEmployeePassword = async (req, res) => {
   try {
@@ -738,9 +794,26 @@ exports.deleteEmployee = async (req, res) => {
 
     const business_id = req.businessId;
 
+    const [data] = await db.query(
+      `SELECT * FROM employees WHERE id=? AND business_id=?`,
+      [employeeId, business_id]
+    );
+
+    if (!data || data.length === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "No Employee found",
+      });
+    }
+
+    const [receiverNot] = await db.query(
+      `DELETE FROM notifications WHERE receiver_id=?`,
+      [employeeId]
+    );
+
     await db.query(`DELETE FROM employees WHERE id=? AND business_id=?`, [
-      business_id,
       employeeId,
+      business_id,
     ]);
     res.status(200).send({
       success: true,
