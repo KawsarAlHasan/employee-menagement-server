@@ -695,6 +695,15 @@ exports.activeDeactivateEmployee = async (req, res) => {
       });
     }
 
+    const checkAdmin = employee[0].type.toLowerCase() == "admin";
+
+    if (checkAdmin) {
+      return res.status(404).send({
+        success: false,
+        message: "Admin status not change",
+      });
+    }
+
     const currentStatus = employee[0].status;
 
     // Toggle the status
@@ -806,6 +815,15 @@ exports.deleteEmployee = async (req, res) => {
       });
     }
 
+    const checkAdmin = data[0].type.toLowerCase() == "admin";
+
+    if (checkAdmin) {
+      return res.status(404).send({
+        success: false,
+        message: "Admin cannot be deleted",
+      });
+    }
+
     const [receiverNot] = await db.query(
       `DELETE FROM notifications WHERE receiver_id=?`,
       [employeeId]
@@ -869,6 +887,13 @@ exports.createAdmins = async (req, res) => {
     );
 
     if (result.insertId) {
+      const bsValue = "default";
+
+      const bsStatus = await db.query(
+        "INSERT INTO taxt_status (busn_id, status) VALUES (?, ?)",
+        [business_id, bsValue]
+      );
+
       const emailData = {
         business_name,
         business_address,

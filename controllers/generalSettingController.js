@@ -137,3 +137,64 @@ exports.deleteGenarelSetting = async (req, res) => {
     });
   }
 };
+
+exports.hundredPerTax = async (req, res) => {
+  try {
+    const busn_id = req.businessId;
+    const [result] = await db.query(
+      "SELECT status FROM taxt_status WHERE busn_id = ?",
+      [busn_id]
+    );
+
+    if (!result || result.length === 0) {
+      return res.status(200).send({
+        success: true,
+        message: "No Tax found",
+        result: result[0],
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      message: "Your Tax Status",
+      result: result[0],
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in Getting Tax",
+      error: error.message,
+    });
+  }
+};
+
+// create and update
+exports.hundredPerTaxUpdate = async (req, res) => {
+  try {
+    const { status } = req.query;
+    const busn_id = req.businessId;
+
+    // Fetch the current value of `hundredPer`
+    const [rows] = await db.query(
+      "SELECT status FROM taxt_status WHERE busn_id = ?",
+      [busn_id]
+    );
+
+    // Update the value in the database
+    await db.query("UPDATE taxt_status SET status = ? WHERE busn_id = ?", [
+      status,
+      busn_id,
+    ]);
+
+    res.status(200).send({
+      success: true,
+      message: `100% Tax has been updated to ${status}`,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in updating Tax",
+      error: error.message,
+    });
+  }
+};

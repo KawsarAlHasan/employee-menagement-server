@@ -213,6 +213,180 @@ exports.getSinglePartner = async (req, res) => {
   }
 };
 
+// get me partner
+exports.getMePartner = async (req, res) => {
+  const { month, year, day } = req.query;
+
+  const currentDate = new Date();
+  const monthNumber = currentDate.getMonth() + 1;
+  const yearNumber = currentDate.getFullYear();
+
+  let monthNum = month;
+  if (!month) {
+    monthNum = monthNumber;
+  }
+
+  let yearNum = year;
+  if (!year) {
+    yearNum = yearNumber;
+  }
+
+  const startDate = new Date(yearNum, monthNum - 1, 1);
+  const endDate = day
+    ? new Date(yearNum, monthNum - 1, day, 23, 59, 59)
+    : new Date(yearNum, monthNum, 0, 23, 59, 59);
+  try {
+    const busn_id = req.businessId;
+
+    const [sales] = await db.query(
+      "SELECT * FROM sales WHERE date >= ? AND date <= ? AND busn_id = ?",
+      [startDate, endDate, busn_id]
+    );
+
+    const onlineSalesQuery =
+      "SELECT amount FROM onlineSales WHERE sales_id = ?";
+
+    const salesWithOnlineSales = await Promise.all(
+      sales.map(async (sale) => {
+        const [onlineSalesResults] = await db.query(onlineSalesQuery, [
+          sale.id,
+        ]);
+        return { ...sale, onlineSales: onlineSalesResults };
+      })
+    );
+
+    let totalTax = 0;
+    let totalSales = 0;
+    let onlineSalesAmount = 0;
+    let totalSoOvAmount = 0;
+    salesWithOnlineSales.forEach((entry) => {
+      const totalIncome =
+        parseFloat(entry.totalCashCollect) + parseFloat(entry.craditeSales);
+      totalSales += totalIncome;
+      onlineSalesAmount += entry?.onlineSales?.reduce(
+        (total, sale) => total + parseFloat(sale?.amount),
+        0
+      );
+      totalTax += entry.tax;
+      totalSoOvAmount += parseFloat(entry.so_ov);
+    });
+
+    const [salaries] = await db.query(
+      "SELECT amount FROM salaries WHERE date >= ? AND date <= ? AND busn_id = ?",
+      [startDate, endDate, busn_id]
+    );
+
+    let totalSalariesAmount = 0;
+    salaries.forEach((entry) => {
+      totalSalariesAmount += parseFloat(entry.amount);
+    });
+
+    const [costings] = await db.query(
+      "SELECT amount FROM costings WHERE date >= ? AND date <= ? AND busn_id = ?",
+      [startDate, endDate, busn_id]
+    );
+
+    let totalCostingsAmount = 0;
+    costings.forEach((entry) => {
+      totalCostingsAmount += parseFloat(entry.amount);
+    });
+
+    // start food cost
+    const [foodCostResult] = await db.query(
+      "SELECT id FROM food_costs WHERE date >= ? AND date <= ? AND busn_id = ?",
+      [startDate, endDate, busn_id]
+    );
+    const vendorsQuery = "SELECT * FROM vendors WHERE food_cost_id = ?";
+    const foodCostWithVendors = await Promise.all(
+      foodCostResult.map(async (cost) => {
+        const [dataResults] = await db.query(vendorsQuery, [cost.id]);
+        return { ...cost, data: dataResults };
+      })
+    );
+
+    let totalFoodCostAmount = 0;
+    foodCostWithVendors.forEach((entry) => {
+      const totalFoodCosts = entry?.data?.reduce(
+        (total, cost) => total + parseFloat(cost?.vendor_amount),
+        0
+      );
+
+      totalFoodCostAmount += totalFoodCosts;
+    });
+    // end food cost
+
+    const totalCradit = totalSales + onlineSalesAmount;
+    const totalDabit =
+      totalCostingsAmount + totalFoodCostAmount + totalSalariesAmount;
+
+    const difference = totalCradit - totalDabit;
+
+    let totalProfit = 0;
+    let totalLoss = 0;
+    let netIncome = 0;
+
+    if (difference >= 0) {
+      totalProfit = difference;
+      netIncome = difference;
+    } else if (difference <= 0) {
+      totalLoss = -difference;
+      netIncome = difference;
+    }
+
+    const partnerEmail = req.decodedemployee.email;
+
+    const [data] = await db.query(`SELECT * FROM partnership WHERE email=?`, [
+      partnerEmail,
+    ]);
+    if (!data || data.length === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "No partner found",
+      });
+    }
+
+    const partnerPercentage = data[0].percentage / 100;
+    const partnerProfit = totalProfit * partnerPercentage;
+    const partnerLoss = totalLoss * partnerPercentage;
+    const partnerNetIncome = netIncome * partnerPercentage;
+
+    const partnerInfo = {
+      ...data[0],
+      partnerProfit,
+      partnerLoss,
+      partnerNetIncome,
+    };
+
+    const wholeBusiness = {
+      totalSales,
+      toatlOnlineSales: onlineSalesAmount,
+      totalTax,
+      totalSalary: totalSalariesAmount,
+      foodCost: totalFoodCostAmount,
+      othersCost: totalCostingsAmount,
+      shortOver: totalSoOvAmount,
+      totalDabit,
+      totalCradit,
+      totalProfit,
+      totalLoss,
+      netIncome: difference,
+    };
+
+    const partner = data[0];
+    res.status(200).send({
+      success: true,
+      partnerInfo,
+      wholeBusiness,
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in getting partner",
+      error,
+    });
+  }
+};
+
 // add a new partner
 exports.addPartner = async (req, res) => {
   const { name, email, password, phone, percentage } = req.body;
@@ -410,6 +584,15 @@ exports.deletePartner = async (req, res) => {
     const [filteredAdmin] = data.filter(
       (employee) => employee.type.toLowerCase() == "admin"
     );
+
+    const checkAdmin = data[0].type.toLowerCase() == "admin";
+
+    if (checkAdmin) {
+      return res.status(404).send({
+        success: false,
+        message: "Admin cannot be deleted",
+      });
+    }
 
     const adminEmail = filteredAdmin.email;
 
