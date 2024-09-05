@@ -555,6 +555,7 @@ exports.deletePartner = async (req, res) => {
   try {
     const busn_id = req.decodedemployee.business_id;
     const partnerId = req.params.id;
+
     if (!partnerId) {
       return res.status(404).send({
         success: false,
@@ -562,58 +563,58 @@ exports.deletePartner = async (req, res) => {
       });
     }
 
+    // Fetch partnership details
     const [partnerPercentage] = await db.query(
       `SELECT * FROM partnership WHERE id=?`,
       [partnerId]
     );
 
-    if (!partnerPercentage || partnerPercentage.length == 0) {
-      return res.status(200).send({
+    if (!partnerPercentage || partnerPercentage.length === 0) {
+      return res.status(404).send({
         success: false,
         message: "No Partners found",
       });
     }
 
     const partnerPer = partnerPercentage[0].percentage;
-    const partnerEmail = partnerPercentage[0].percentage;
+    const partnerEmail = partnerPercentage[0].email;
 
-    const [data] = await db.query(
-      "SELECT * FROM employees WHERE business_id=?",
+    // Fetch employees related to the business who are admin
+    const [filteredAdmin] = await db.query(
+      "SELECT * FROM employees WHERE business_id = ? AND type = 'admin'",
       [busn_id]
     );
-    const [filteredAdmin] = data.filter(
-      (employee) => employee.type.toLowerCase() == "admin"
-    );
 
-    const checkAdmin = data[0].type.toLowerCase() == "admin";
+    const adminEmail = filteredAdmin[0].email;
 
-    if (checkAdmin) {
-      return res.status(404).send({
-        success: false,
-        message: "Admin cannot be deleted",
-      });
-    }
-
-    const adminEmail = filteredAdmin.email;
-
+    // Update percentage of admin in partnership
     await db.query(
       "UPDATE partnership SET percentage = percentage + ? WHERE email = ?",
       [partnerPer, adminEmail]
     );
 
+    // Delete partner from partnership and employees
     await db.query(`DELETE FROM partnership WHERE id=?`, [partnerId]);
-
-    await db.query(`DELETE FROM employees WHERE email=?`, [partnerEmail]);
+    await db.query(`DELETE FROM employees WHERE email=? AND type = 'Partner'`, [
+      partnerEmail,
+    ]);
 
     res.status(200).send({
       success: true,
       message: "Partner Deleted Successfully",
     });
   } catch (error) {
+    if (error.code === "ECONNRESET") {
+      // Connection was reset, handle this case
+      console.error("Connection reset error: ", error);
+    } else {
+      console.error("SQL error: ", error.sqlMessage, error);
+    }
+
     res.status(500).send({
       success: false,
       message: "Error in deleting Partner",
-      error: error?.message,
+      error: error.message,
     });
   }
 };

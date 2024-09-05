@@ -8,6 +8,7 @@ const {
   deleteGenarelSetting,
   hundredPerTax,
   hundredPerTaxUpdate,
+  businessSummary,
 } = require("../controllers/generalSettingController");
 
 const router = express.Router();
@@ -19,5 +20,6 @@ router.delete("/delete/:id", varifyEmployee, deleteGenarelSetting);
 
 router.get("/tax-status", varifyEmployee, hundredPerTax);
 router.put("/tax-status-change", varifyEmployee, hundredPerTaxUpdate);
+router.get("/business-summary", varifyEmployee, businessSummary);
 
 module.exports = router;
