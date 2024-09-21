@@ -2,8 +2,19 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 const punycode = require("punycode/");
 
+// let transporter = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     user: process.env.EMAIL_ADD,
+//     pass: process.env.EMAIL_PASS,
+//   },
+// });
+
+// Hostinger SMTP credentials
 let transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.hostinger.com",
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_ADD,
     pass: process.env.EMAIL_PASS,
@@ -33,11 +44,11 @@ async function sendMail(data) {
     let subject = "";
 
     if (type == "admin") {
-      subject = "BMS Admin Information";
+      subject = "ABS Admin Information";
     } else if (type == "Partner") {
-      subject = "BMS Partner Information";
+      subject = "ABS Partner Information";
     } else {
-      subject = "BMS Employee Information";
+      subject = "ABS Employee Information";
     }
 
     let htmlContent = "";
@@ -82,8 +93,8 @@ async function sendMail(data) {
                       <p>If you have any questions or need further assistance, please don't hesitate to contact us at ${business_name}.</p>
                       <p>Best regards,</p>
                       <p>Abu,<br>
-                        Owner of BMS,<br>
-                        BMS.<br>
+                        Owner of ABS,<br>
+                        ABS.<br>
                         +1938479403</p>
                   </td>
               </tr>
@@ -124,8 +135,8 @@ async function sendMail(data) {
                       <p>If you have any questions or need further assistance, please do not hesitate to contact the admin.</p>
                       <p>Best regards,</p>
                       <p>Abu,<br>
-                      Owner of BMS,<br>
-                      BMS.<br>
+                      Owner of ABS,<br>
+                      ABS.<br>
                       +1938479403</p>
                   </td>
               </tr>
@@ -173,8 +184,8 @@ async function sendMail(data) {
                       <p>If you have any questions or need further assistance, please do not hesitate to contact the admin.</p>
                       <p>Best regards,</p>
                       <p>Abu,<br>
-                      Owner of BMS,<br>
-                      BMS.<br>
+                      Owner of ABS,<br>
+                      ABS.<br>
                       +1938479403</p>
                   </td>
               </tr>
@@ -184,7 +195,7 @@ async function sendMail(data) {
     }
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: process.env.EMAIL_ADD,
       to: emailAddress,
       subject: subject,
       html: htmlContent,

@@ -500,9 +500,10 @@ exports.updatePartner = async (req, res) => {
     }
 
     // Get admin data
-    const [data] = await db.query("SELECT * FROM employees WHERE busn_id = ?", [
-      busn_id,
-    ]);
+    const [data] = await db.query(
+      "SELECT * FROM employees WHERE business_id = ?",
+      [busn_id]
+    );
     const [filteredAdmin] = data.filter(
       (employee) => employee.type.toLowerCase() == "admin"
     );
@@ -552,69 +553,103 @@ exports.updatePartner = async (req, res) => {
 
 // delete partner
 exports.deletePartner = async (req, res) => {
+  const connection = await db.getConnection();
+
   try {
     const busn_id = req.decodedemployee.business_id;
     const partnerId = req.params.id;
 
+    // Validate partnerId and busn_id
     if (!partnerId) {
-      return res.status(404).send({
+      return res.status(400).send({
         success: false,
-        message: "partnerId is required",
+        message: "Partner ID is required",
+      });
+    }
+    if (!busn_id) {
+      return res.status(400).send({
+        success: false,
+        message: "Business ID is missing",
       });
     }
 
+    // Start transaction
+    await connection.beginTransaction();
+
     // Fetch partnership details
-    const [partnerPercentage] = await db.query(
-      `SELECT * FROM partnership WHERE id=?`,
+    const [partnerData] = await connection.query(
+      `SELECT percentage, email FROM partnership WHERE id = ?`,
       [partnerId]
     );
 
-    if (!partnerPercentage || partnerPercentage.length === 0) {
+    if (partnerData.length === 0) {
+      await connection.rollback(); // Rollback if no partner found
       return res.status(404).send({
         success: false,
-        message: "No Partners found",
+        message: "Partner not found",
       });
     }
 
-    const partnerPer = partnerPercentage[0].percentage;
-    const partnerEmail = partnerPercentage[0].email;
+    const partnerPer = partnerData[0].percentage;
+    const partnerEmail = partnerData[0].email;
 
-    // Fetch employees related to the business who are admin
-    const [filteredAdmin] = await db.query(
-      "SELECT * FROM employees WHERE business_id = ? AND type = 'admin'",
+    // Fetch admin of the business
+    const [adminData] = await connection.query(
+      "SELECT email FROM employees WHERE business_id = ? AND type = 'admin'",
       [busn_id]
     );
 
-    const adminEmail = filteredAdmin[0].email;
+    if (adminData.length === 0) {
+      await connection.rollback();
+      return res.status(404).send({
+        success: false,
+        message: "No admin found for this business",
+      });
+    }
 
-    // Update percentage of admin in partnership
-    await db.query(
+    const adminEmail = adminData[0].email;
+
+    // Update percentage for admin in partnership
+    await connection.query(
       "UPDATE partnership SET percentage = percentage + ? WHERE email = ?",
       [partnerPer, adminEmail]
     );
 
-    // Delete partner from partnership and employees
-    await db.query(`DELETE FROM partnership WHERE id=?`, [partnerId]);
-    await db.query(`DELETE FROM employees WHERE email=? AND type = 'Partner'`, [
-      partnerEmail,
-    ]);
+    // Delete partner from employees
+    const [deleteEmployee] = await connection.query(
+      `DELETE FROM employees WHERE email = ? AND type = 'Partner'`,
+      [partnerEmail]
+    );
+
+    if (deleteEmployee.affectedRows === 0) {
+      await connection.rollback();
+      return res.status(403).send({
+        success: false,
+        message: "Admin cannot be deleted",
+      });
+    }
+
+    // Delete partner from partnership
+    await connection.query(`DELETE FROM partnership WHERE id = ?`, [partnerId]);
+
+    // Commit transaction
+    await connection.commit();
 
     res.status(200).send({
       success: true,
-      message: "Partner Deleted Successfully",
+      message: "Partner deleted successfully",
     });
   } catch (error) {
-    if (error.code === "ECONNRESET") {
-      // Connection was reset, handle this case
-      console.error("Connection reset error: ", error);
-    } else {
-      console.error("SQL error: ", error.sqlMessage, error);
-    }
+    await connection.rollback(); // Rollback the transaction in case of error
+
+    console.error("Error deleting partner: ", error);
 
     res.status(500).send({
       success: false,
-      message: "Error in deleting Partner",
+      message: "Failed to delete partner",
       error: error.message,
     });
+  } finally {
+    connection.release(); // Release the connection
   }
 };

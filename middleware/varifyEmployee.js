@@ -26,7 +26,9 @@ module.exports = async (req, res, next) => {
       const busn_id = result[0]?.business_id;
 
       if (!busn_id) {
-        return res.status(404).json({ error: "Business ID not found." });
+        return res
+          .status(404)
+          .json({ error: "User problems. Please login again" });
       }
 
       req.businessId = busn_id;
