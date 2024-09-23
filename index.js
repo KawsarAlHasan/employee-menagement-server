@@ -35,6 +35,7 @@ app.use("/api/v1/general-setting", require("./routes/generalSettingRoute"));
 app.use("/api/v1/notification", require("./routes/notificationsRoute"));
 app.use("/api/v1/terms", require("./routes/termsAndConditionsRoute"));
 app.use("/api/v1/privacy", require("./routes/privacyPolicyRoute"));
+app.use("/api/v1/online-platform", require("./routes/onlineSalesRoute"));
 
 const port = process.env.PORT || 8080;
 
