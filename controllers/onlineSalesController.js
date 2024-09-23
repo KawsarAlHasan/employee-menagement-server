@@ -153,105 +153,56 @@ exports.getAllOnlineSales = async (req, res) => {
       "SELECT id FROM sales WHERE date >= ? AND date <= ? AND busn_id = ? ORDER BY id DESC",
       [startDate, endDate, busn_id]
     );
-    if (!data || data.length == 0) {
+
+    if (!data || data.length === 0) {
       return res.status(200).send({
         success: true,
         message: "No sales found",
-        data: data,
+        data: [],
       });
     }
 
     const onlineSalesQuery = "SELECT * FROM onlineSales WHERE sales_id = ?";
 
-    const salesWithOnlineSales = await Promise.all(
+    const onlineSalesTotals = {};
+
+    await Promise.all(
       data.map(async (sale) => {
         const [onlineSalesResults] = await db.query(onlineSalesQuery, [
           sale.id,
         ]);
 
-        // Group onlineSales by name
-        const groupedOnlineSales = onlineSalesResults.reduce((acc, curr) => {
-          if (!acc[curr.name]) {
-            acc[curr.name] = [];
+        onlineSalesResults.forEach((onlineSale) => {
+          if (onlineSalesTotals[onlineSale.name]) {
+            onlineSalesTotals[onlineSale.name] += parseFloat(onlineSale.amount);
+          } else {
+            onlineSalesTotals[onlineSale.name] = parseFloat(onlineSale.amount);
           }
-          acc[curr.name].push(curr);
-          return acc;
-        }, {});
-
-        return { ...sale, onlineSales: groupedOnlineSales };
+        });
       })
     );
 
-    let totalSalesAmount = 0;
-    salesWithOnlineSales.forEach((entry) => {
-      const totalSales =
-        parseFloat(entry.totalCashCollect) +
-        parseFloat(entry.craditeSales) +
-        Object.values(entry.onlineSales).reduce((total, salesArray) => {
-          return (
-            total +
-            salesArray.reduce(
-              (subTotal, sale) => subTotal + parseFloat(sale?.amount),
-              0
-            )
-          );
-        }, 0);
+    const groupedSales = Object.keys(onlineSalesTotals).map((name) => ({
+      name,
+      amount: onlineSalesTotals[name].toFixed(2),
+    }));
 
-      totalSalesAmount += totalSales;
-    });
+    // Calculate the total online sales amount
+    const totalOnlineSales = Object.values(onlineSalesTotals)
+      .reduce((acc, amount) => acc + amount, 0)
+      .toFixed(2);
 
     res.status(200).send({
       success: true,
-      message: "All sales",
-      totalSales: salesWithOnlineSales.length,
-      totalSalesAmount,
-      data: salesWithOnlineSales,
+      message: "All online sales",
+      totalOnlineSales, // Total sales amount included here
+      data: groupedSales,
     });
   } catch (error) {
     res.status(500).send({
       success: false,
-      message: "Error in Get All sales",
+      message: "Error in Get All online sales",
       error: error.message,
-    });
-  }
-};
-
-// get single sales by id
-exports.getSingleSales = async (req, res) => {
-  try {
-    const salesID = req.params.id;
-    if (!salesID) {
-      return res.status(404).send({
-        success: false,
-        message: "salesID is required",
-      });
-    }
-
-    const salesQuery = `SELECT * FROM sales WHERE id=?`;
-    const [sales] = await db.query(salesQuery, [salesID]);
-
-    if (!sales || sales.length == 0) {
-      return res.status(404).send({
-        success: false,
-        message: "No sales found",
-      });
-    }
-
-    const onlineSalesQuery = `SELECT name, amount FROM onlineSales WHERE sales_id = ?`;
-    const onlineSalesData = await db.query(onlineSalesQuery, [salesID]);
-
-    const onlineData = onlineSalesData[0];
-
-    sales.forEach((sale) => {
-      sale.onlineSales = onlineData;
-    });
-
-    res.status(200).send(sales[0]);
-  } catch (error) {
-    console.error(error); // Log the error for debugging
-    res.status(500).send({
-      success: false,
-      message: "Error in getting sales",
     });
   }
 };

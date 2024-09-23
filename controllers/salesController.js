@@ -43,32 +43,6 @@ exports.getAllSales = async (req, res) => {
       })
     );
 
-    //     const onlineSalesQuery2 = `
-    //   SELECT name, SUM(CAST(amount AS DECIMAL(10,2))) AS total_sales
-    //   FROM onlineSales
-    //   WHERE sales_id = ?
-    //   GROUP BY name;
-    // `;
-
-    // const salesWithOnlineSales2 = await Promise.all(
-    //   data.map(async (sale) => {
-    //     const [onlineSalesResults] = await db.query(onlineSalesQuery2, [sale.id]);
-    //     // Assuming each sale has a unique name within the sales_id
-    //     const onlineSale = onlineSalesResults.find(result => result.name === sale.name);
-    //     return { ...sale, onlineSales: onlineSale ? onlineSale.total_sales : 0 };
-    //   })
-    // );
-
-    // const salesWithOnlineSales2 = await Promise.all(
-    //   data.map(async (sale) => {
-    //     const [onlineSalesResults] = await db.query(onlineSalesQuery2, [
-    //       sale.id,
-    //     ]);
-    //     return onlineSalesResults;
-    //   })
-    // );
-    // res.send(salesWithOnlineSales2);
-
     let totalSalesAmount = 0;
     salesWithOnlineSales.forEach((entry) => {
       const totalSales =
