@@ -387,6 +387,62 @@ exports.getMePartner = async (req, res) => {
   }
 };
 
+// Update Partner with image
+exports.updatePartnerWithImage = async (req, res) => {
+  try {
+    const partnerID = req.params.id;
+    const { name, phone, email } = req.body;
+
+    // Get current partner data
+    const [partnerData] = await db.query(
+      `SELECT * FROM partnership WHERE id = ?`,
+      [partnerID]
+    );
+
+    const partnerName = name || partnerData[0].name;
+    const partnerPhone = phone || partnerData[0].phone;
+    const partnerEmail = partnerData[0].email;
+
+    const images = req.file;
+
+    let proPic = partnerData[0].profilePic || "";
+    if (images && images.path) {
+      proPic = `/public/images/${images.filename}`;
+    }
+
+    if (email && partnerEmail) {
+      await db.query(`UPDATE employees SET email = ? WHERE email = ?`, [
+        email,
+        partnerEmail,
+      ]);
+    }
+
+    // Update partner data
+    const [updateResult] = await db.query(
+      `UPDATE partnership SET name = ?, phone = ?, email = ?, profilePic =?  WHERE id = ?`,
+      [partnerName, partnerPhone, email || partnerEmail, proPic, partnerID]
+    );
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(500).send({
+        success: false,
+        message: "Error in updating Partnership",
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Partner updated successfully",
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: "Error in updating Partner",
+      error: error?.message,
+    });
+  }
+};
+
 // add a new partner
 exports.addPartner = async (req, res) => {
   const { name, email, password, phone, percentage } = req.body;
@@ -488,7 +544,7 @@ exports.updatePartner = async (req, res) => {
 
     // Get current partner data
     const [getPartnerdata] = await db.query(
-      `SELECT percentage FROM partnership WHERE id = ? AND busn_id =?`,
+      `SELECT email, percentage FROM partnership WHERE id = ? AND busn_id =?`,
       [partnerID, busn_id]
     );
 
@@ -512,11 +568,20 @@ exports.updatePartner = async (req, res) => {
     const difference = percentage - prePartnerPercentage;
     const adminEmail = filteredAdmin.email;
 
+    const preEmail = getPartnerdata[0].email;
+
     // Update partner data
     const [updateResult] = await db.query(
       `UPDATE partnership SET name = ?, email = ?, phone = ?, percentage = ? WHERE id = ? AND busn_id=?`,
-      [name, email, phone, percentage, partnerID, busn_id]
+      [name, email || preEmail, phone, percentage, partnerID, busn_id]
     );
+
+    if (email && preEmail) {
+      await db.query(
+        `UPDATE employees SET email = ? WHERE email = ? AND business_id=?`,
+        [email, preEmail, busn_id]
+      );
+    }
 
     if (updateResult.affectedRows === 0) {
       return res.status(500).send({
