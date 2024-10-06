@@ -22,7 +22,8 @@ app.use(express.json());
 app.use("/public", express.static(path.join(__dirname, "public")));
 
 app.use("/api/v1/employee", require("./routes/employeeRoute"));
-app.use("/api/v1/admin", require("./routes/adminRoute"));
+app.use("/api/v1/employee", require("./routes/adminRoute"));
+app.use("/api/v1/position", require("./routes/employeePositionRoute"));
 app.use("/api/v1/salary", require("./routes/salariesRoute"));
 app.use("/api/v1/work-time", require("./routes/workTimeRoute"));
 app.use("/api/v1/sales", require("./routes/salesRoute"));
@@ -37,6 +38,7 @@ app.use("/api/v1/terms", require("./routes/termsAndConditionsRoute"));
 app.use("/api/v1/privacy", require("./routes/privacyPolicyRoute"));
 app.use("/api/v1/online-platform", require("./routes/onlineSalesRoute"));
 app.use("/api/v1/users", require("./routes/forgotPassword"));
+app.use("/api/v1/contact-support", require("./routes/contactSupportRoute"));
 
 const port = process.env.PORT || 8080;
 

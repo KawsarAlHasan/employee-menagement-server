@@ -1,115 +1,187 @@
-const { generateAdminToken } = require("../confiq/adminToken");
 const db = require("../confiq/db");
+const { generateEmployeeToken } = require("../confiq/employeeToken");
 const bcrypt = require("bcrypt");
+const moment = require("moment");
+const { sendMail } = require("../middleware/sandEmail");
 
-exports.loginAdmin = async (req, res) => {
+// create Admmin
+exports.createAdmins = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { business_name, business_address, name, email, password, phone } =
+      req.body;
 
-    if (!email || !password) {
-      return res.status(401).json({
+    if (!name || !email || !password || !phone) {
+      return res.status(500).send({
         success: false,
-        error: "Please provide your credentials",
+        message: "Please provide all fields",
       });
     }
 
-    const [results] = await db.query(
-      `SELECT * FROM employeesAdmin WHERE email=?`,
-      [email]
+    const type = "admin";
+
+    const min = 1000;
+    const max = 9999;
+    const randomCode = Math.floor(Math.random() * (max - min + 1)) + min;
+
+    const [businessData] = await db.query(
+      "SELECT business_id FROM employees ORDER BY business_id DESC"
     );
 
-    if (results.length === 0) {
-      return res.status(401).json({
-        success: false,
-        error: "Email and Password is not correct",
-      });
-    }
-    const admin = results[0];
+    const business_id = businessData[0].business_id + 1; /// Last business data + 1
     const hashedPassword = await bcrypt.hash(password, 10);
+    const [result] = await db.query(
+      `INSERT INTO employees (business_name, business_address, business_id, name, email, password, emailPin, phone, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        business_name,
+        business_address,
+        business_id,
+        name,
+        email,
+        hashedPassword,
+        randomCode,
+        phone,
+        type,
+      ]
+    );
 
-    const isMatch = await bcrypt.compare(admin?.password, hashedPassword);
+    if (result.insertId) {
+      const bsValue = "default";
 
-    if (!isMatch) {
-      return res.status(403).json({
-        success: false,
-        error: "Email and Password is not correct",
-      });
+      const bsStatus = await db.query(
+        "INSERT INTO taxt_status (busn_id, status) VALUES (?, ?)",
+        [business_id, bsValue]
+      );
+
+      const emailData = {
+        business_name,
+        business_address,
+        email,
+        name,
+        password,
+        phone,
+        type,
+        randomCode,
+      };
+
+      const emailResult = await sendMail(emailData);
+
+      if (!emailResult.messageId) {
+        res.status(500).send("Failed to send email");
+      }
     }
-    const token = generateAdminToken(admin);
-    const { password: pwd, ...adminWithoutPassword } = admin;
-    res.status(200).json({
+
+    res.status(200).send({
       success: true,
-      message: "Successfully logged in",
-      data: {
-        admin: adminWithoutPassword,
-        token,
-      },
+      message: "Admin created successfully",
     });
   } catch (error) {
-    res.status(400).send({
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+    res.status(500).send({
       success: false,
-      message: "Admin Login Unseccess",
+      message: "Error in Create Admin API",
       error: error.message,
     });
   }
 };
 
-exports.updateAdminPassword = async (req, res) => {
+// update admin
+exports.updateAdmins = async (req, res) => {
   try {
-    const adminID = req.params.id;
-    if (!adminID) {
+    const employeeID = req.params.id;
+    if (!employeeID) {
       return res.status(404).send({
         success: false,
-        message: "Invalid id or missing admin id",
+        message: "Admin ID is requied",
       });
     }
 
-    const { password } = req.body;
-    if (!password) {
-      return res.status(404).send({
-        success: false,
-        message: "Please Provide a new Password",
-      });
-    }
-    const data = await db.query(
-      `UPDATE employeesAdmin SET password=? WHERE id =? `,
-      [password, adminID]
+    const { business_name, business_address, name, phone } = req.body;
+
+    const business_id = req.businessId;
+
+    const [resultsData] = await db.query(
+      `UPDATE employees SET business_name=?, business_address=?, name=?, phone=? WHERE id =? AND business_id=?`,
+      [business_name, business_address, name, phone, employeeID, business_id]
     );
-    if (!data) {
-      return res.status(500).send({
+
+    if (!resultsData) {
+      return res.status(403).json({
         success: false,
-        message: "Error in update admin password",
+        error: "Something went wrong",
       });
     }
+
     res.status(200).send({
       success: true,
-      message: "Admin Password updated successfully",
+      message: "Employee updated successfully",
     });
   } catch (error) {
     res.status(500).send({
       success: false,
-      message: "Error in Update admin password",
+      message: "Error in Update Employee ",
       error,
     });
   }
 };
 
-exports.getMeAdmin = async (req, res) => {
+// update admin password
+exports.updateAdminPassword = async (req, res) => {
   try {
-    const decodedadmin = req?.decodedadmin?.email;
-    const result = await db.query(
-      `SELECT * FROM employeesAdmin WHERE email=?`,
-      [decodedadmin]
+    const employeeID = req.params.id;
+    if (!employeeID) {
+      return res.status(404).send({
+        success: false,
+        message: "Admin ID is requied",
+      });
+    }
+    const busn_id = req.businessId;
+    const { old_password, new_password } = req.body;
+    const type = "admin";
+
+    const [data] = await db.query(
+      "SELECT password FROM employees WHERE id =? AND type=?",
+      [employeeID, type]
     );
 
-    res.status(200).json({
+    const checkPassword = data[0]?.password;
+
+    const isMatch = await bcrypt.compare(old_password, checkPassword);
+
+    if (!isMatch) {
+      return res.status(403).json({
+        success: false,
+        error: "Your Old Password is not correct",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+
+    const [result] = await db.query(
+      `UPDATE employees SET password=? WHERE id =? AND business_id=?`,
+      [hashedPassword, employeeID, busn_id]
+    );
+
+    if (!result) {
+      return res.status(403).json({
+        success: false,
+        error: "Something went wrong",
+      });
+    }
+
+    res.status(200).send({
       success: true,
-      admin: result[0],
+      message: "Admin password updated successfully",
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(500).send({
       success: false,
-      error: error.message,
+      message: "Error in password Update Admin ",
+      error,
     });
   }
 };

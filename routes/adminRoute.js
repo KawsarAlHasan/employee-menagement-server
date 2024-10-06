@@ -1,15 +1,20 @@
 const express = require("express");
+
+const varifyEmployee = require("../middleware/varifyEmployee");
 const {
-  loginAdmin,
+  createAdmins,
+  updateAdmins,
   updateAdminPassword,
-  getMeAdmin,
 } = require("../controllers/adminController");
-const varifyAdmin = require("../middleware/varifyAdmin");
 
 const router = express.Router();
 
-router.post("/login", loginAdmin);
-router.put("/update/:id", varifyAdmin, updateAdminPassword);
-router.get("/me", varifyAdmin, getMeAdmin);
+router.post("/new-admin/create", createAdmins);
+router.put("/new-admin/update/:id", varifyEmployee, updateAdmins);
+router.put(
+  "/new-admin/update-password/:id",
+  varifyEmployee,
+  updateAdminPassword
+);
 
 module.exports = router;

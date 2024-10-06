@@ -7,9 +7,6 @@ const {
   deleteEmployee,
   employeeLogin,
   getMeEmployee,
-  createAdmins,
-  updateAdmins,
-  updateAdminPassword,
   updateEmployeePassword,
   employeeCheck,
   getSingleEmployeeInfo,
@@ -41,13 +38,5 @@ router.put(
 router.put("/status/:id", varifyEmployee, activeDeactivateEmployee);
 router.put("/update-password/:id", varifyEmployee, updateEmployeePassword);
 router.delete("/delete/:id", varifyEmployee, deleteEmployee);
-
-router.post("/new-admin/create", createAdmins);
-router.put("/new-admin/update/:id", varifyEmployee, updateAdmins);
-router.put(
-  "/new-admin/update-password/:id",
-  varifyEmployee,
-  updateAdminPassword
-);
 
 module.exports = router;
