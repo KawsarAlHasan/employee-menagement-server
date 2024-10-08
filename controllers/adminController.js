@@ -116,6 +116,29 @@ exports.updateAdmins = async (req, res) => {
       });
     }
 
+    const images = req.file;
+    const [empLoyeeProfilePic] = await db.query(
+      `SELECT profilePic FROM employee_history WHERE employee_id=?`,
+      [employeeID]
+    );
+
+    let proPic = empLoyeeProfilePic[0]?.profilePic;
+    if (images && images.path) {
+      proPic = `/public/images/${images.filename}`;
+    }
+
+    if (empLoyeeProfilePic == 0) {
+      await db.query(
+        `INSERT INTO employee_history (employee_id, profilePic) VALUES (?, ?)`,
+        [employeeID, proPic]
+      );
+    } else {
+      await db.query(
+        `UPDATE employee_history SET profilePic=?, address=? WHERE employee_id =?`,
+        [proPic, employeeID]
+      );
+    }
+
     res.status(200).send({
       success: true,
       message: "Employee updated successfully",

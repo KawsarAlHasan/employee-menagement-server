@@ -6,11 +6,17 @@ const {
   updateAdmins,
   updateAdminPassword,
 } = require("../controllers/adminController");
+const uploadImage = require("../middleware/uploaderImage");
 
 const router = express.Router();
 
 router.post("/new-admin/create", createAdmins);
-router.put("/new-admin/update/:id", varifyEmployee, updateAdmins);
+router.put(
+  "/new-admin/update/:id",
+  uploadImage.single("profilePic"),
+  varifyEmployee,
+  updateAdmins
+);
 router.put(
   "/new-admin/update-password/:id",
   varifyEmployee,
