@@ -32,6 +32,11 @@ exports.getLossAndProfit = async (req, res) => {
       totalSalesRegister += parseFloat(entry.salesRegister);
     });
 
+    let totalCreditSales = 0;
+    sales.forEach((entry) => {
+      totalCreditSales += parseFloat(entry.craditeSales);
+    });
+
     const onlineSalesQuery =
       "SELECT amount FROM onlineSales WHERE sales_id = ?";
 
@@ -125,6 +130,7 @@ exports.getLossAndProfit = async (req, res) => {
     res.status(200).send({
       success: true,
       totalSalesRegister,
+      totalCreditSales,
       totalSales,
       toatlOnlineSales: onlineSalesAmount,
       totalTax,

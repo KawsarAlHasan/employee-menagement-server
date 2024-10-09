@@ -39,6 +39,7 @@ app.use("/api/v1/privacy", require("./routes/privacyPolicyRoute"));
 app.use("/api/v1/online-platform", require("./routes/onlineSalesRoute"));
 app.use("/api/v1/users", require("./routes/forgotPassword"));
 app.use("/api/v1/contact-support", require("./routes/contactSupportRoute"));
+app.use("/api/v1/processign-fee", require("./routes/processingFeeRoute"));
 
 const port = process.env.PORT || 8080;
 

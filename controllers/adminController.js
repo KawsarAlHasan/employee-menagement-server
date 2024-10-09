@@ -45,6 +45,12 @@ exports.createAdmins = async (req, res) => {
     );
 
     if (result.insertId) {
+      const fee = 0;
+      const [data] = await db.query(
+        "INSERT INTO processing_fee (fee, busn_id) VALUES (?, ?)",
+        [fee, business_id]
+      );
+
       const bsValue = "default";
 
       const bsStatus = await db.query(
