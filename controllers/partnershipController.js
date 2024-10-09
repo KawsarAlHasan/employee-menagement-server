@@ -80,10 +80,15 @@ exports.getSinglePartner = async (req, res) => {
     let totalSales = 0;
     let onlineSalesAmount = 0;
     let totalSoOvAmount = 0;
+    let totalCreditSales = 0;
+    let totalAdditionalIncome = 0;
+
     salesWithOnlineSales.forEach((entry) => {
       const totalIncome =
         parseFloat(entry.totalCashCollect) + parseFloat(entry.craditeSales);
       totalSales += totalIncome;
+      totalCreditSales += parseFloat(entry.craditeSales);
+      totalAdditionalIncome += parseFloat(entry.additional_income);
       onlineSalesAmount += entry?.onlineSales?.reduce(
         (total, sale) => total + parseFloat(sale?.amount),
         0
@@ -184,6 +189,8 @@ exports.getSinglePartner = async (req, res) => {
     };
 
     const wholeBusiness = {
+      totalCreditSales,
+      totalAdditionalIncome,
       totalSales,
       toatlOnlineSales: onlineSalesAmount,
       totalTax,
@@ -269,6 +276,13 @@ exports.getMePartner = async (req, res) => {
       );
       totalTax += entry.tax;
       totalSoOvAmount += parseFloat(entry.so_ov);
+    });
+
+    let totalCreditSales = 0;
+    let totalAdditionalIncome = 0;
+    sales.forEach((entry) => {
+      totalCreditSales += parseFloat(entry.craditeSales);
+      totalAdditionalIncome += parseFloat(entry.additional_income);
     });
 
     const [salaries] = await db.query(
@@ -358,6 +372,8 @@ exports.getMePartner = async (req, res) => {
     };
 
     const wholeBusiness = {
+      totalCreditSales: totalCreditSales || 0,
+      totalAdditionalIncome,
       totalSales,
       toatlOnlineSales: onlineSalesAmount,
       totalTax,

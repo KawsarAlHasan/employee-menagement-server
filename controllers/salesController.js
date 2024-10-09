@@ -123,6 +123,7 @@ exports.createsales = async (req, res) => {
       onlineSales,
       date,
       tax,
+      additional_income,
     } = req.body;
 
     if (!date) {
@@ -135,7 +136,7 @@ exports.createsales = async (req, res) => {
     const busn_id = req.businessId;
 
     const salesQuery =
-      "INSERT INTO sales (salesRegister, totalCashCollect, craditeSales, so_ov, date, tax, busn_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+      "INSERT INTO sales (salesRegister, totalCashCollect, craditeSales, so_ov, date, tax, busn_id, additional_income) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     const salesValues = [
       salesRegister,
       totalCashCollect,
@@ -144,6 +145,7 @@ exports.createsales = async (req, res) => {
       date,
       tax,
       busn_id,
+      additional_income || 0,
     ];
 
     const [salesResult] = await db.query(salesQuery, salesValues);
