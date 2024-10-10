@@ -34,9 +34,7 @@ async function updateEmpoyeeMail(data) {
     let subject = "";
 
     // Define the subject based on the user type and purpose
-    if (type === "admin") {
-      subject = "ABS Admin Account Update Information";
-    } else if (type === "Partner") {
+    if (type === "Partner") {
       subject = "ABS Partner Account Update Information";
     } else {
       subject = "ABS Employee Account Update Information";
@@ -45,46 +43,7 @@ async function updateEmpoyeeMail(data) {
     let htmlContent = "";
 
     // Admin Email Template
-    if (type === "admin") {
-      htmlContent = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>ABS Account Update Information</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-            <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td>
-                        <h2>Dear ${name},</h2>
-                        <p>We would like to inform you that your admin account details have been updated successfully.</p>
-                        <h3>Updated Business Details:</h3>
-                        <ul>
-                            <li><strong>Business Name:</strong> ${business_name}</li>
-                            <li><strong>Business Address:</strong> ${business_address}</li>
-                        </ul>
-                        <h3>Your Updated Account Details:</h3>
-                        <ul>
-                            <li><strong>Name:</strong> ${name}</li>
-                            <li><strong>Email:</strong> ${email}</li>
-                            <li><strong>Phone:</strong> ${phone}</li>
-                        </ul>
-                        <p>Please check your updated details and if there are any discrepancies, feel free to contact us at ${business_name}.</p>
-                        <p>Best regards,</p>
-                        <p>Abu,<br>
-                        Owner of ABS,<br>
-                        ABS.<br>
-                        +1938479403</p>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>`;
-
-      // Partner Email Template
-    } else if (type === "Partner") {
+    if (type === "Partner") {
       htmlContent = `
         <!DOCTYPE html>
         <html lang="en">

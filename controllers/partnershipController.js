@@ -1,5 +1,6 @@
 const db = require("../confiq/db");
 const { sendMail } = require("../middleware/sandEmail");
+const { updateEmpoyeeMail } = require("../middleware/updateEmployeeEmail");
 const bcrypt = require("bcrypt");
 const moment = require("moment");
 
@@ -572,17 +573,14 @@ exports.updatePartner = async (req, res) => {
     }
 
     // Get admin data
-    const [data] = await db.query(
-      "SELECT * FROM employees WHERE business_id = ?",
+    const [adminData] = await db.query(
+      "SELECT * FROM employees WHERE business_id = ? AND type = 'admin'",
       [busn_id]
-    );
-    const [filteredAdmin] = data.filter(
-      (employee) => employee.type.toLowerCase() == "admin"
     );
 
     const prePartnerPercentage = getPartnerdata[0].percentage;
     const difference = percentage - prePartnerPercentage;
-    const adminEmail = filteredAdmin.email;
+    const adminEmail = adminData[0].email;
 
     const preEmail = getPartnerdata[0].email;
 
@@ -617,6 +615,20 @@ exports.updatePartner = async (req, res) => {
         "UPDATE partnership SET percentage = percentage + ? WHERE email = ? AND busn_id=?",
         [-difference, adminEmail, busn_id]
       );
+    }
+
+    const emailData = {
+      name,
+      business_name: adminData[0].business_name,
+      business_address: adminData[0].business_address,
+      email,
+      phone,
+      type: "Partner",
+      percentage,
+    };
+    const emailResult = await updateEmpoyeeMail(emailData);
+    if (!emailResult.messageId) {
+      res.status(500).send("Failed to send email");
     }
 
     res.status(201).json({
