@@ -10,35 +10,44 @@ exports.getAllEmployees = async (req, res) => {
   try {
     const business_id = req.businessId;
 
-    const [data] = await db.query(
-      "SELECT * FROM employees WHERE business_id=?",
+    const [employees] = await db.query(
+      "SELECT * FROM employees WHERE business_id = ? AND type NOT IN ('admin', 'Partner')",
       [business_id]
     );
 
-    if (!data || data.length === 0) {
+    if (!employees || employees.length === 0) {
       return res.status(200).send({
         success: true,
         message: "No Employees found",
-        data: data[0],
+        data: [],
       });
     }
 
-    // Filter out admin employees
-    const filteredEmployees = data.filter(
-      (employee) =>
-        employee.type.toLowerCase() !== "admin" && employee.type !== "Partner"
+    const employeeIds = employees.map((emp) => emp.id);
+
+    const [histories] = await db.query(
+      "SELECT * FROM employee_history WHERE employee_id IN (?)",
+      [employeeIds]
     );
+
+    const employeesWithMergedHistory = employees.map((emp) => {
+      const empHistory = histories.find(
+        (history) => history.employee_id === emp.id
+      );
+
+      return empHistory ? { ...emp, ...empHistory } : emp;
+    });
 
     res.status(200).send({
       success: true,
-      message: "All Employees",
-      totalempLoyees: filteredEmployees.length,
-      data: filteredEmployees,
+      message: "All Employees with history",
+      totalEmployees: employees.length,
+      data: employeesWithMergedHistory,
     });
   } catch (error) {
     res.status(500).send({
       success: false,
-      message: "Error in Get All empLoyees",
+      message: "Error in Get All Employees",
       error: error.message,
     });
   }
