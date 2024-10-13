@@ -51,9 +51,14 @@ exports.createAdmins = async (req, res) => {
         [fee, business_id]
       );
 
+      await db.query(
+        "INSERT INTO general_setting (tax, state, busn_id) VALUES (?, ?, ?)",
+        [0, "state name", business_id]
+      );
+
       const bsValue = "default";
 
-      const bsStatus = await db.query(
+      await db.query(
         "INSERT INTO taxt_status (busn_id, status) VALUES (?, ?)",
         [business_id, bsValue]
       );
