@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post("/new-admin/create", createAdmins);
 router.put(
-  "/new-admin/update/:id",
+  "/new-admin/update",
   uploadImage.single("profilePic"),
   varifyEmployee,
   updateAdmins

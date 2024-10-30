@@ -56,8 +56,45 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// Step 2: Verify reset code and allow user to reset password
-router.post("/verify-reset-code", async (req, res) => {
+// Step 2: Verify reset code
+router.post("/verify-reset-cod", async (req, res) => {
+  const { email, resetCode } = req.body;
+
+  if (!email || !resetCode) {
+    return res.status(404).send({
+      success: false,
+      message: "email & resetCode is required",
+    });
+  }
+
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM password_resets WHERE email = ? AND reset_code = ? AND reset_code_expire > NOW()",
+      [email, resetCode]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset code",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Valid reset code",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
+// Step 3: Verify reset code and allow user to reset password
+router.post("/new-password", async (req, res) => {
   const { email, resetCode, newPassword } = req.body;
 
   if (!email || !resetCode || !newPassword) {
@@ -93,7 +130,7 @@ router.post("/verify-reset-code", async (req, res) => {
     // Delete the used reset request from password_resets table
     await db.query("DELETE FROM password_resets WHERE email = ?", [email]);
 
-    res.json({
+    res.status(200).json({
       success: true,
       message: "Password successfully reset",
     });

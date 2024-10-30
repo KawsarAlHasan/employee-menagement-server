@@ -103,21 +103,19 @@ exports.createAdmins = async (req, res) => {
 // update admin
 exports.updateAdmins = async (req, res) => {
   try {
-    const employeeID = req.params.id;
-    if (!employeeID) {
-      return res.status(404).send({
-        success: false,
-        message: "Admin ID is requied",
-      });
-    }
+    const admin = req.decodedemployee;
 
     const { business_name, business_address, name, phone } = req.body;
 
-    const business_id = req.businessId;
-
     const [resultsData] = await db.query(
-      `UPDATE employees SET business_name=?, business_address=?, name=?, phone=? WHERE id =? AND business_id=?`,
-      [business_name, business_address, name, phone, employeeID, business_id]
+      `UPDATE employees SET business_name=?, business_address=?, name=?, phone=? WHERE id =?`,
+      [
+        business_name || admin.business_name,
+        business_address || admin.business_address,
+        name || admin.name,
+        phone || admin.phone,
+        admin.id,
+      ]
     );
 
     if (!resultsData) {
@@ -130,7 +128,7 @@ exports.updateAdmins = async (req, res) => {
     const images = req.file;
     const [empLoyeeProfilePic] = await db.query(
       `SELECT profilePic FROM employee_history WHERE employee_id=?`,
-      [employeeID]
+      [admin.id]
     );
 
     let proPic = empLoyeeProfilePic[0]?.profilePic;
@@ -141,24 +139,24 @@ exports.updateAdmins = async (req, res) => {
     if (empLoyeeProfilePic == 0) {
       await db.query(
         `INSERT INTO employee_history (employee_id, profilePic) VALUES (?, ?)`,
-        [employeeID, proPic]
+        [admin.id, proPic]
       );
     } else {
       await db.query(
-        `UPDATE employee_history SET profilePic=?, address=? WHERE employee_id =?`,
-        [proPic, employeeID]
+        `UPDATE employee_history SET profilePic=? WHERE employee_id =?`,
+        [proPic, admin.id]
       );
     }
 
     res.status(200).send({
       success: true,
-      message: "Employee updated successfully",
+      message: "Admin updated successfully",
     });
   } catch (error) {
     res.status(500).send({
       success: false,
-      message: "Error in Update Employee ",
-      error,
+      message: "Error in Update Admin ",
+      error: error.message,
     });
   }
 };

@@ -10,7 +10,7 @@ exports.getOnlineSalesPlatform = async (req, res) => {
     );
 
     if (!result || result.length === 0) {
-      return res.status(201).send({
+      return res.status(200).send({
         success: true,
         message: "No Online platform name found",
         data: result,
